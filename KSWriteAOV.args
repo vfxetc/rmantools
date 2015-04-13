@@ -1,0 +1,44 @@
+<args format="1.0">
+
+    <info plugin="KSWriteAOV" revision="$Revision" date="$Date">
+        KSWriteAOV: xxx.
+    </info>
+
+    <page name="Parameters" open="True">
+        <param
+            name="colorValue"
+            lavel="Color Value"
+            type="color"
+            input="True"
+            default="0 0 0">
+            <tags>
+                <tag value="color"/>
+            </tags>
+        </param>
+        <param
+            name="aovName"
+            label="AOV Name"
+            type="string"
+            input="False"
+            default="">
+            <tags>
+                <tag value="__noconnection"/>
+            </tags>
+        </param>
+    </page>
+
+    <output name="colorResult">
+        <tags>
+            <tag value="color"/>
+        </tags>
+    </output>
+
+    <shaderType>
+        <tag value="pattern"/>
+    </shaderType>
+    <typeTag>
+        <tag value="pattern"/>
+    </typeTag>
+    <rfmdata nodeid="20000000" classification="rendernode/RenderMan/pattern"/>
+
+</args>
