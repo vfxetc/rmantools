@@ -4,35 +4,67 @@
         KSWriteAOV: xxx.
     </info>
 
-    <page name="Parameters" open="True">
-        <param
-            name="colorValue"
-            lavel="Color Value"
-            type="color"
-            input="True"
-            default="0 0 0">
-            <tags>
-                <tag value="color"/>
-            </tags>
+    <page name="Color" open="True">
+
+        <param name="inputColor" lavel="Input Color" type="color" input="True" default="0 0 0">
+            <tags><tag value="color"/></tags>
         </param>
-        <param
-            name="aovName"
-            label="AOV Name"
-            type="string"
-            input="False"
-            default="">
-            <tags>
-                <tag value="__noconnection"/>
-            </tags>
+        <param name="colorName" label="Color AOV Name" type="string" input="False" default="">
+            <tags><tag value="__noconnection"/></tags>
         </param>
+
+    </page>
+    <page name="Float" open="True">
+
+        <param name="inputFloat" lavel="Input Float" type="float" input="True" default="0">
+            <tags><tag value="float"/></tags>
+        </param>
+        <param name="floatName" label="Float AOV Name" type="string" input="False" default="">
+            <tags><tag value="__noconnection"/></tags>
+        </param>
+
+    </page>
+    <page name="Utils" open="True">
+
+        <param name="inputPassColor" lavel="Passthrough Color Value" type="color" input="True" default="0 0 0">
+            <help>Just for triggering evaluation.</help>
+            <tags><tag value="color"/></tags>
+        </param>
+        <param name="inputPassFloat" lavel="Passthrough Float Value" type="float" input="True" default="0">
+            <help>Just for triggering evaluation.</help>
+            <tags><tag value="float"/></tags>
+        </param>
+        <param name="inputAOV" lavel="Input AOV" type="int" input="True" default="0">
+            <help>Just for triggering evaluation.</help>
+            <tags><tag value="int"/></tags>
+        </param>
+
     </page>
 
-    <output name="colorResult">
+    <output name="resultColor">
+        <tags><tag value="color"/></tags>
+    </output>
+    <output name="resultFloat">
+        <tags><tag value="float"/></tags>
+    </output>
+
+    <output name="resultPassColor">
+        <help>Just for triggering evaluation.</help>
+        <tags><tag value="color"/></tags>
+    </output>
+    <output name="resultPassFloat">
+        <help>Just for triggering evaluation.</help>
+        <tags><tag value="float"/></tags>
+    </output>
+    <output name="resultAOV" label="Result AOV">
+        <help>Just for triggering evaluation.</help>
         <tags>
-            <tag value="color"/>
+            <tag value="int"/>
         </tags>
     </output>
 
+
+    <!-- Not sure how many of the following are required, but some subset is. -->
     <shaderType>
         <tag value="pattern"/>
     </shaderType>
