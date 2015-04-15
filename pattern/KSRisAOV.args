@@ -1,7 +1,7 @@
 <args format="1.0">
 
-    <info plugin="KSWriteAOV" revision="$Revision" date="$Date">
-        KSWriteAOV: xxx.
+    <info plugin="KSRisAOV" revision="$Revision" date="$Date">
+        KSRisAOV: xxx.
     </info>
 
     <page name="Color" open="True">

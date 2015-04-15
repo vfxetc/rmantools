@@ -7,12 +7,12 @@
 #include <stdio.h>
 
 
-class KSWriteAOV : public RixPattern
+class KSRisAOV : public RixPattern
 {
 public:
 
-    KSWriteAOV();
-    virtual ~KSWriteAOV();
+    KSRisAOV();
+    virtual ~KSRisAOV();
 
     virtual int Init(RixContext &, char const *pluginpath);
     virtual RixSCParamInfo const *GetParamTable();
@@ -29,18 +29,18 @@ public:
 };
 
 
-KSWriteAOV::KSWriteAOV()
+KSRisAOV::KSRisAOV()
 {
 }
 
 
-KSWriteAOV::~KSWriteAOV()
+KSRisAOV::~KSRisAOV()
 {
 }
 
 
 int
-KSWriteAOV::Init(RixContext &ctx, char const *pluginpath)
+KSRisAOV::Init(RixContext &ctx, char const *pluginpath)
 {
     return 0;
 }
@@ -65,7 +65,7 @@ enum paramId
 
 
 RixSCParamInfo const *
-KSWriteAOV::GetParamTable()
+KSRisAOV::GetParamTable()
 {
     static RixSCParamInfo s_ptable[] =
     {
@@ -90,23 +90,39 @@ KSWriteAOV::GetParamTable()
 
 
 void
-KSWriteAOV::Finalize(RixContext &ctx)
+KSRisAOV::Finalize(RixContext &ctx)
 {
 }
 
 
+struct MyData {
+public:
+    bool inited;
+    RtInt colorDisplay;
+    RtInt floatDisplay;
+};
 
 int
-KSWriteAOV::CreateInstanceData(RixContext &ctx,
+KSRisAOV::CreateInstanceData(RixContext &ctx,
                                char const *handle,
                                RixParameterList const *plist,
                                InstanceData *idata)
 {
+
+    RtInt dataSize = sizeof(MyData*);
+    MyData *data = (MyData*)malloc(dataSize);
+
+    data->inited = false;
+
+    idata->data = data;
+    idata->datalen = dataSize;
+    idata->freefunc = free;
+    
     return 0;
 }
 
 int
-KSWriteAOV::ComputeOutputParams(RixShadingContext const *sctx,
+KSRisAOV::ComputeOutputParams(RixShadingContext const *sctx,
                                 RtInt *noutputs, OutputSpec **outputs,
                                 RtConstPointer instanceData,
                                 RixSCParamInfo const *ignored)
@@ -118,26 +134,61 @@ KSWriteAOV::ComputeOutputParams(RixShadingContext const *sctx,
 
     RtConstString *colorName, *floatName;
 
-    // Get the names.
-    sctx->EvalParam(k_colorName, -1, &colorName, NULL, false);
-    if (colorName && !strlen(*colorName)) {
-        colorName = NULL;
-    }
-    sctx->EvalParam(k_floatName, -1, &floatName, NULL, false);
-    if (floatName && !strlen(*floatName)) {
-        floatName = NULL;
-    }
+    RtInt colorDisplay = -1;
+    RtInt floatDisplay = -1;
 
-    // Get the displays.
-    // TODO: Get this into CreateInstanceData.
-    RixRenderState *renderState;
-    renderState = (RixRenderState *)sctx->GetRixInterface(k_RixRenderState);
-    RixRenderState::FrameInfo frameInfo;
-    renderState->GetFrameInfo(&frameInfo);
-    RixIntegratorEnvironment *integratorEnv;
-    integratorEnv = (RixIntegratorEnvironment*)frameInfo.integratorEnv;
-    RtInt numDisplays = integratorEnv->numDisplays;
-    RixDisplayChannel const* displayChannels = integratorEnv->displays;
+    MyData *data = (MyData*)instanceData;
+    if (data->inited) {
+
+        colorDisplay = data->colorDisplay;
+        floatDisplay = data->floatDisplay;
+
+    } else {
+
+        // Get the names.
+        sctx->EvalParam(k_colorName, -1, &colorName, NULL, false);
+        if (colorName && !strlen(*colorName)) {
+            colorName = NULL;
+        }
+        sctx->EvalParam(k_floatName, -1, &floatName, NULL, false);
+        if (floatName && !strlen(*floatName)) {
+            floatName = NULL;
+        }
+
+        // Get the displays.
+        // TODO: Get this into CreateInstanceData.
+        RixRenderState *renderState;
+        renderState = (RixRenderState *)sctx->GetRixInterface(k_RixRenderState);
+        RixRenderState::FrameInfo frameInfo;
+        renderState->GetFrameInfo(&frameInfo);
+        RixIntegratorEnvironment *integratorEnv;
+        integratorEnv = (RixIntegratorEnvironment*)frameInfo.integratorEnv;
+        RtInt numDisplays = integratorEnv->numDisplays;
+        RixDisplayChannel const* displayChannels = integratorEnv->displays;
+
+        // Figure out which displays we are writing to.
+        if (colorName || floatName) {
+            for (unsigned int i = 0; i < numDisplays; i++) {
+                if (colorName && !strcmp(displayChannels[i].channel, *colorName)) {
+                    colorDisplay = displayChannels[i].id;
+                    if (!floatName || floatDisplay >= 0) {
+                        break;
+                    }
+                }
+                if (floatName && !strcmp(displayChannels[i].channel, *floatName)) {
+                    floatDisplay = displayChannels[i].id;
+                    if (!colorName || colorDisplay >= 0) {
+                        break;
+                    }
+                }
+            }
+        }
+
+        data->colorDisplay = colorDisplay;
+        data->floatDisplay = floatDisplay;
+        data->inited = true;
+
+    }
 
     // Get inputs.
     RtColorRGB defaultColor; // Just something for it pull from without complaining.
@@ -153,29 +204,6 @@ KSWriteAOV::ComputeOutputParams(RixShadingContext const *sctx,
     RtInt const *inputAOV;
     sctx->EvalParam(k_inputAOV, -1, &inputAOV);
 
-    // Don't bother writing AOVs if we don't have inputs.
-    colorName = hasInputColor ? colorName : NULL;
-    floatName = hasInputFloat ? floatName : NULL;
-
-    // Figure out which displays we are writing to.
-    RtInt colorDisplay = -1;
-    RtInt floatDisplay = -1;
-    if (colorName || floatName) {
-        for (unsigned int i = 0; i < numDisplays; i++) {
-            if (colorName && !strcmp(displayChannels[i].channel, *colorName)) {
-                colorDisplay = displayChannels[i].id;
-                if (!floatName || floatDisplay >= 0) {
-                    break;
-                }
-            }
-            if (floatName && !strcmp(displayChannels[i].channel, *floatName)) {
-                floatDisplay = displayChannels[i].id;
-                if (!colorName || colorDisplay >= 0) {
-                    break;
-                }
-            }
-        }
-    }
 
     RixShadingContext::Allocator pool(sctx);
 
@@ -239,11 +267,11 @@ KSWriteAOV::ComputeOutputParams(RixShadingContext const *sctx,
 
 RIX_PATTERNCREATE
 {
-    return new KSWriteAOV();
+    return new KSRisAOV();
 }
 
 RIX_PATTERNDESTROY
 {
-    delete ((KSWriteAOV*)pattern);
+    delete ((KSRisAOV*)pattern);
 }
 
