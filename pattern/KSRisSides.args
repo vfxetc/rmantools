@@ -1,0 +1,64 @@
+<args format="1.0">
+
+    <metashader shader="PxrSeExpr" />
+
+    <param name="inputFront" type="color" default="1.0 0.5 0.0">
+        <tags>
+            <tag value="color"/>
+        </tags>
+    </param>
+
+    <param name="inputBack" type="color" default="1.0 0.0 1.0">
+        <tags>
+            <tag value="color"/>
+        </tags>
+    </param>
+
+    <param name="expression"
+        type="string"
+        default="result = dot(Nn, Vn) > 0 ? inputFront : inputBack; result"
+        widget="null"
+    />
+
+    <output name="resultRGB">
+        <tags>
+            <tag value ="color"/>
+            <tag value ="vector"/>
+            <tag value ="normal"/>
+            <tag value ="point"/>
+        </tags>
+    </output>
+
+    <!--
+    <output name="resultR">
+        <tags>
+            <tag value ="float"/>
+        </tags>
+    </output>
+    <output name="resultG">
+        <tags>
+            <tag value ="float"/>
+        </tags>
+    </output>
+    <output name="resultB">
+        <tags>
+            <tag value ="float"/>
+        </tags>
+    </output>
+    <output name="resultF">
+        <tags>
+            <tag value ="float"/>
+        </tags>
+    </output>
+    -->
+    
+    <typeTag>
+        <tag value="pattern"/>
+    </typeTag>
+
+    <shaderType>
+        <tag value="pattern"/>
+    </shaderType>
+    <rfmdata nodeid="20000001" classification="rendernode/RenderMan/pattern"/>
+
+</args>

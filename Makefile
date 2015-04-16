@@ -1,4 +1,7 @@
 
+OSL_SRCS := $(wildcard pattern/*.osl)
+OSL_SHADERS := $(OSL_SRCS:pattern/%.osl=build/%.oso)
+
 PATTERN_SRCS := $(wildcard pattern/*.cpp)
 PATTERNS := $(PATTERN_SRCS:pattern/%.cpp=build/%.so)
 
@@ -22,8 +25,11 @@ CXXFLAGS += -I$(RMANTREE)/include
 .PHONY: build patterns clean
 .DEFAULT: build
 
-build: patterns
+build: patterns shaders
+
 patterns: $(PATTERNS)
+
+shaders: $(OSL_SHADERS)
 
 build/%.o: pattern/%.cpp
 	@ mkdir -p $(dir $@)
@@ -31,6 +37,9 @@ build/%.o: pattern/%.cpp
 
 build/%.so: build/%.o
 	$(CXX) $(LDFLAGS) $^ -o $@
+
+build/%.oso: pattern/%.osl
+	oslc -o $@ $^
 
 clean:
 	- rm -rf build

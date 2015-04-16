@@ -1,0 +1,6 @@
+shader mixcolor (color inC1 = 0,
+                 color inC2 = 1,
+                 output color Cout = 0)
+{
+    Cout = mix (inC1, inC2, u);
+}

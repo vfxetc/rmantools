@@ -68,9 +68,6 @@
     <shaderType>
         <tag value="pattern"/>
     </shaderType>
-    <typeTag>
-        <tag value="pattern"/>
-    </typeTag>
     <rfmdata nodeid="20000000" classification="rendernode/RenderMan/pattern"/>
 
 </args>

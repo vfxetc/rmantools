@@ -1,0 +1,37 @@
+<args format="1.0">
+
+    <help>
+        A pattern that lets you execute OSL shader.
+    </help>
+
+    <metashader shader="PxrOSL" />
+
+    <param name="shader" type="string" default="KSOslMix" widget="null"/>
+
+    <param name="inC1" type="color" default="1.0 0.5 0.0">
+        <tags>
+            <tag value="color"/>
+        </tags>
+    </param>
+
+    <param name="inC2" type="color" default="1.0 0.0 1.0">
+        <tags>
+            <tag value="color"/>
+        </tags>
+    </param>
+
+    <output name="result"> 
+        <tags>
+            <tag value ="color"/>
+            <tag value ="vector"/>
+            <tag value ="normal"/>
+            <tag value ="point"/>
+        </tags>
+    </output>
+
+    <shaderType>
+        <tag value="pattern"/>
+    </shaderType>
+    <rfmdata nodeid="20000002"
+        classification="rendernode/RenderMan/pattern"/>
+</args>
