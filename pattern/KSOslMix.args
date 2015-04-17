@@ -8,19 +8,19 @@
 
     <param name="shader" type="string" default="KSOslMix" widget="null"/>
 
-    <param name="inC1" type="color" default="1.0 0.5 0.0">
+    <param name="inC1" type="color" default="1.0 0.0 0.0">
         <tags>
             <tag value="color"/>
         </tags>
     </param>
 
-    <param name="inC2" type="color" default="1.0 0.0 1.0">
+    <param name="inC2" type="color" default="0.0 1.0 0.0">
         <tags>
             <tag value="color"/>
         </tags>
     </param>
 
-    <output name="result"> 
+    <output name="Cout"> 
         <tags>
             <tag value ="color"/>
             <tag value ="vector"/>
