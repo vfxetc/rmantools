@@ -16,7 +16,7 @@ extensions pixar {} {
         parameter point Q
         parameter { output color } outC { detail mustvary }
 
-        RSLInclude _thisfile_
+        RSLInclude KSReyesNoise.h
         RSLFunction { // No extra source for KSReyesNoise. }
 
     }
@@ -25,7 +25,7 @@ extensions pixar {} {
 </rman>
 */
 
-void rfm_KSReyesNoise(point Q; output color outC;)
+void KSReyesNoise(point Q; output color outC;)
 {
     outC = noise(Q);
 }
