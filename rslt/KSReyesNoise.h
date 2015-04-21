@@ -3,7 +3,7 @@
 /* 
 <rman id="rslt">
 slim 1 extensions pixar_db {
-extensions pixar {} {
+extensions pixar rfm_ {
 
     template void KSReyesNoise {
 
@@ -25,7 +25,7 @@ extensions pixar {} {
 </rman>
 */
 
-void KSReyesNoise(point Q; output color outC;)
+void rfm_KSReyesNoise(point Q; output color outC;)
 {
     outC = noise(Q);
 }
