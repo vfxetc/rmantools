@@ -3,7 +3,7 @@
 /* 
 <rman id="rslt">
 slim 1 extensions pixar_db {
-extensions pixar rfm_ {
+extensions pixar {} {
 
     template void KSReyesNoise {
 
