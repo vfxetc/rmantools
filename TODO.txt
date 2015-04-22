@@ -6,4 +6,28 @@
 - set Reyes to be the default renderer (although this may be better suited to
   be in a ks* repo)
 
-  
+- figure out why our shaders don't automatically connect to the right ports
+
+- shaders:
+
+    - modify GPSurface to add AOVs:
+        - DirectIrradiance (per-light)
+        - DirectIrradianceNoShadow (per-light)
+            - or Shadow (per-light)
+        - UnlitTexture
+        - Spec (per-light)
+        - SpecNoShadow (per-light)
+            - or Shador (per-light)
+
+    - can we add a fractional holdout matte into a surface shader?
+        - http://renderman.pixar.com/resources/RPS_17/appnote.29.html
+
+
+    - modify RMSShaveHair to add same AOVs.
+    - KSMultiAOV
+        - a number of colour inputs; no floats required
+        - dynamic names
+        - single float Matte to multiply them all by
+        - single passthrough or AOV int
+
+
