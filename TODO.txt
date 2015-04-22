@@ -1,5 +1,9 @@
 
 - example node has a rfm_ prefix in the name
 - example RSLT do not have previews in Maya
-- example node has an extra "out color" that I don't control
-- example node creates a shading group
+
+- script to regen all of the RfM IDs
+
+- set Reyes to be the default renderer (although this may be better suited to
+  be in a ks* repo)
+
