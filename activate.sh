@@ -1,12 +1,6 @@
 
-rmantools="$(cd "$(dirname "${BASH_SOURCE[0]}")"; pwd)"
+rmantools_env="$(python -c 'from rmantools import get_envvars; print "\n".join("export %s=%s" % x for x in get_envvars().iteritems())')"
 
-export RMS_SCRIPT_PATHS="$rmantools"
-
-export RMAN_RIX_PATH="$rmantools/build"
-export RMAN_SHADER_PATH="$rmantools/build"
-export RMAN_DISPLAY_PATH="$rmantools/build"
-export RMAN_FILTER_PATH="$rmantools/build"
-export RMAN_PROCEDURAL_PATH="$rmantools/build"
-
-export XBMLANGPATH="$rmantools/icons"
+if [[ $? == 0 ]]; then
+    eval "$rmantools_env"
+fi

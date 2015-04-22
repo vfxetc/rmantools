@@ -1,2 +1,9 @@
-/build
+# General.
+.DS_Store
+*.pyc
+*.egg-info
+
+# Build products.
 *.so
+*.oso
+*.o

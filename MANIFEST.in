@@ -1,0 +1,20 @@
+# RIS UI
+recursive-include rmantools *.args
+
+# RSLT.
+recursive-include rmantools *.sl
+recursive-include rmantools *.h
+
+# Open Shading Language.
+recursive-include rmantools *.osl
+recursive-include rmantools *.oso
+
+# Compiled.
+recursive-include rmantools *.cpp
+recursive-include rmantools *.so
+
+# Config.
+recursive-include rmantools *.ini
+
+# Icons.
+recursive-include rmantools *.png

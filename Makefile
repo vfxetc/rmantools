@@ -1,9 +1,9 @@
 
-OSL_SRCS := $(wildcard pattern/*.osl)
-OSL_SHADERS := $(OSL_SRCS:pattern/%.osl=build/%.oso)
+OSL_SRCS := $(wildcard rmantools/pattern/*.osl)
+OSL_SHADERS := $(OSL_SRCS:%.osl=%.oso)
 
-PATTERN_SRCS := $(wildcard pattern/*.cpp)
-PATTERNS := $(PATTERN_SRCS:pattern/%.cpp=build/%.so)
+PATTERN_SRCS := $(wildcard rmantools/pattern/*.cpp)
+PATTERNS := $(PATTERN_SRCS:%.cpp=%.so)
 
 
 UNAME_S := $(shell uname -s)
@@ -31,14 +31,13 @@ patterns: $(PATTERNS)
 
 shaders: $(OSL_SHADERS)
 
-build/%.o: pattern/%.cpp
-	@ mkdir -p $(dir $@)
+%.o: %.cpp
 	$(CXX) -c $(CXXFLAGS) $^ -o $@
 
-build/%.so: build/%.o
+%.so: %.o
 	$(CXX) $(LDFLAGS) $^ -o $@
 
-build/%.oso: pattern/%.osl
+%.oso: %.osl
 	oslc -o $@ $^
 
 clean:
