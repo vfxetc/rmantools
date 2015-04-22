@@ -1,5 +1,4 @@
 
-- example node has a rfm_ prefix in the name
 - example RSLT do not have previews in Maya
 
 - script to regen all of the RfM IDs

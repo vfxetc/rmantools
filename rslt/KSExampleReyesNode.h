@@ -3,17 +3,18 @@
 /* 
 <rman id="rslt">
 slim 1 extensions pixar_db {
-extensions pixar rfm_ {
+extensions pixar {} {
 
     template void KSExampleReyesNode {
         
-        
+
         # Classifications include:
-        #     - rendernode/RenderMan/texture/3d: RfM connects a new
-        #       place3dTexture to the "pm" attribute.
-        #     - rendernode/RenderMan/texture/2d: RfM likely does something,
-        #       but I haven't tried yet.
-        #     - rendernode/RenderMan/utility: does nothing special.
+        #     - rendernode/RenderMan/texture/3d: RfM makes a place3dTexture
+        #       and connects (at least) the "pm" attribute. See more in
+        #       $RMSTREE/lib/rfm/rsl/rfmTexture3d.rslt
+        #     - rendernode/RenderMan/texture/2d: Likely very similar to 3d above.
+        #     - rendernode/RenderMan/utility: Does nothing special AFAICT.
+        #     - swatch/rmanSwatch: Use RenderMan to create the swatch (maybe?)
         userdata {
             rfm_nodeid 2000012
             rfm_classification rendernode/RenderMan/utility
@@ -36,8 +37,7 @@ extensions pixar rfm_ {
 
 
 
-/* The "rfm_" prefix corresponds to "extensions pixar rfm_" in the slim template. */
-void rfm_KSExampleReyesNode(point location; output color resultColor;)
+void KSExampleReyesNode(point location; output color resultColor;)
 {
     resultColor = noise(location);
 }
