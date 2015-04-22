@@ -64,7 +64,6 @@
     </output>
 
 
-    <!-- Not sure how many of the following are required, but some subset is. -->
     <shaderType>
         <tag value="pattern"/>
     </shaderType>

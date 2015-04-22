@@ -1,12 +1,13 @@
 <args format="1.0">
 
     <help>
-        A pattern that lets you execute OSL shader.
+        A example pattern that lets you execute an OSL shader.
     </help>
 
     <metashader shader="PxrOSL" />
 
-    <param name="shader" type="string" default="KSOslMix" widget="null"/>
+    <!-- Put name of real shader here. -->
+    <param name="shader" type="string" default="KSExampleRisOSL" widget="null"/>
 
     <param name="inC1" type="color" default="1.0 0.0 0.0">
         <tags>
@@ -22,16 +23,16 @@
 
     <output name="Cout"> 
         <tags>
-            <tag value ="color"/>
-            <tag value ="vector"/>
-            <tag value ="normal"/>
-            <tag value ="point"/>
+            <tag value="color"/>
+            <tag value="vector"/>
+            <tag value="normal"/>
+            <tag value="point"/>
         </tags>
     </output>
 
     <shaderType>
         <tag value="pattern"/>
     </shaderType>
-    <rfmdata nodeid="20000002"
-        classification="rendernode/RenderMan/pattern"/>
+    <rfmdata nodeid="20000002" classification="rendernode/RenderMan/pattern"/>
+
 </args>

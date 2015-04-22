@@ -20,37 +20,15 @@
         widget="null"
     />
 
+    <!-- I don't think we can change this name. -->
     <output name="resultRGB">
         <tags>
-            <tag value ="color"/>
-            <tag value ="vector"/>
-            <tag value ="normal"/>
-            <tag value ="point"/>
+            <tag value="color"/>
+            <tag value="vector"/>
+            <tag value="normal"/>
+            <tag value="point"/>
         </tags>
     </output>
-
-    <!--
-    <output name="resultR">
-        <tags>
-            <tag value ="float"/>
-        </tags>
-    </output>
-    <output name="resultG">
-        <tags>
-            <tag value ="float"/>
-        </tags>
-    </output>
-    <output name="resultB">
-        <tags>
-            <tag value ="float"/>
-        </tags>
-    </output>
-    <output name="resultF">
-        <tags>
-            <tag value ="float"/>
-        </tags>
-    </output>
-    -->
     
     <typeTag>
         <tag value="pattern"/>

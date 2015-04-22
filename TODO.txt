@@ -1,8 +1,9 @@
 
-- example RSLT do not have previews in Maya
+- our RSLTs do not have previews in Maya
 
 - script to regen all of the RfM IDs
 
 - set Reyes to be the default renderer (although this may be better suited to
   be in a ks* repo)
 
+  

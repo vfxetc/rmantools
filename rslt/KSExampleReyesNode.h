@@ -7,6 +7,9 @@ extensions pixar {} {
 
     template void KSExampleReyesNode {
         
+        description {
+            Example of a RSLT node; computes color noise for a given location.
+        }
 
         # Classifications include:
         #     - rendernode/RenderMan/texture/3d: RfM makes a place3dTexture
@@ -20,7 +23,10 @@ extensions pixar {} {
             rfm_classification rendernode/RenderMan/utility
         }
 
-        parameter point location
+        parameter point location {
+            description { The location to sample noise. }
+        }
+        
         parameter { output color } resultColor { detail mustvary }
 
         RSLInclude KSExampleReyesNode.h
