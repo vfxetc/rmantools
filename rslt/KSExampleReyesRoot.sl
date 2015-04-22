@@ -5,7 +5,7 @@
 slim 1 extensions pixar_db {
 extensions pixar {} {
     
-    template void KSReyesDiffuseClass {
+    template void KSExampleReyesRoot {
 
         userdata {
             rfm_nodeid 2000011
