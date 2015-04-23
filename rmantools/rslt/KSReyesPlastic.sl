@@ -19,15 +19,13 @@ extensions pixar {} {
                     diffuseColor
                     ambientColor
                 }
-                lighting {
-                    f:initDiffuse
-                }
-                diffuselighting {
-                    f:initDiffuse
-                }
-                specularlighting {
+                initSpecular {
                     specularColor
                     roughness
+                }
+                lighting {
+                    f:initDiffuse
+                    f:initSpecular
                 }
             }
         }
@@ -175,7 +173,6 @@ RSLINJECT_shaderdef
         color groupedUnshadowedSpecularDirect[];
 
         if (depth == 0 && m_nLightGroups != 0) {
-            
             // We only need all of this data when we are writing AOVs.
             directlighting(this, lights,
                 "diffuseresult", diffuseDirect,
