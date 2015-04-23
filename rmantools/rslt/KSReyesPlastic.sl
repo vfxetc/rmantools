@@ -16,6 +16,8 @@ extensions pixar {} {
         codegenhints {
             shaderobject {
                 begin {
+                    bumpAmount
+                    bumpScale
                     ior
                     mediaIor
                 }
@@ -93,6 +95,17 @@ extensions pixar {} {
             default 16
         }
 
+        parameter float bumpAmount {
+            provider parameterlist
+            default 0
+        }
+
+        parameter float bumpScale {
+            detail cantvary
+            provider parameterlist
+            default 1
+        }
+
 
         RSLSource ShaderPipeline _thisfile_
 
@@ -138,7 +151,15 @@ RSLINJECT_shaderdef
     }
 
     public void begin() {
+        extern normal N;
+
         RSLINJECT_begin
+
+        if (bumpAmount != 0 && bumpScale != 0) {
+            point Pd = P + normalize(N) * (bumpAmount * bumpScale);
+            N = calculatenormal(Pd);
+        }
+
         m_shadingCtx->init();
         m_fresnel->init(m_shadingCtx, mediaIor, ior);
     }
@@ -232,7 +253,7 @@ RSLINJECT_shaderdef
             + specularColor * (specularDirect + specularIndirect);
 
         if (depth == 0) {
-            
+
             writeAOVs("%s",
                 diffuseDirect, specularDirect,
                 unshadowedDiffuseDirect, unshadowedSpecularDirect,
