@@ -72,8 +72,17 @@ RSLINJECT_shaderdef
         Ci = Cs;
 
         color ambientResult = ambientColor * ambient();
-        color diffuseResult = diffuseColor * diffuse(Nf);
         color specularResult = specularColor * specular(Nf, V, roughness);
+
+        color diffuseIrradiance = 0;
+        illuminance(P, Nf, PI/2) {
+            vector Ln = normalize(L);
+            diffuseIrradiance += Cl * Ln.Nf;
+            string group;
+            float gotGroup = getvar(light, "__group", group);
+            if (gotGroup) printf("group: %f %s\n", gotGroup, group);
+        }
+        color diffuseResult = diffuseColor * diffuseIrradiance;
 
         Ci *= ambientResult + diffuseResult;
         Ci += specularResult;
