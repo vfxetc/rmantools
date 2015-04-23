@@ -131,6 +131,29 @@ RSLINJECT_shaderdef
         );
     }
 
+    void writeAOVs(string pattern; color diffuseDirect, specularDirect,
+        unshadowedDiffuseDirect, unshadowedSpecularDirect, diffuseIndirect
+    ) {
+
+        writeaov(format(pattern, "Diffuse"), diffuseColor * (diffuseDirect + diffuseIndirect)); // Same as GP.
+        writeaov(format(pattern, "Specular"), specularColor * specularDirect); // DIRECT ONLY! Same as GP.
+
+        writeaov(format(pattern, "DiffuseDirect"), diffuseDirect);
+        writeaov(format(pattern, "SpecularDirect"), specularDirect);
+        writeaov(format(pattern, "DiffuseDirectNoShadow"), unshadowedDiffuseDirect);
+        writeaov(format(pattern, "SpecularDirectNoShadow"), unshadowedSpecularDirect);
+
+        // We find these shadows make a bit more sense.
+        writeaov(format(pattern, "DiffuseShadowMult"), diffuseDirect / unshadowedDiffuseDirect);
+        writeaov(format(pattern, "SpecularShadowMult"), specularDirect / unshadowedSpecularDirect);
+
+        if (WriteGPAOVs) {
+            writeaov(format(pattern, "DiffuseShadow" ), diffuseColor  * (unshadowedDiffuseDirect  - diffuseDirect )); // Same as GP.
+            writeaov(format(pattern, "SpecularShadow"), specularColor * (unshadowedSpecularDirect - specularDirect)); // Same as GP.
+        }
+
+    }
+
     public void lighting(output color Ci, Oi)
     {
         RSLINJECT_lighting
@@ -151,67 +174,61 @@ RSLINJECT_shaderdef
         color groupedUnshadowedDiffuseDirect[];
         color groupedUnshadowedSpecularDirect[];
 
-        directlighting(this, lights,
-            "diffuseresult", diffuseDirect,
-            "specularresult", specularDirect,
-            "unshadoweddiffuseresult", unshadowedDiffuseDirect,
-            "unshadowedspecularresult", unshadowedSpecularDirect,
+        if (depth == 0 && m_nLightGroups != 0) {
+            
+            // We only need all of this data when we are writing AOVs.
+            directlighting(this, lights,
+                "diffuseresult", diffuseDirect,
+                "specularresult", specularDirect,
+                "unshadoweddiffuseresult", unshadowedDiffuseDirect,
+                "unshadowedspecularresult", unshadowedSpecularDirect,
 
-            //*
-            "lightgroups", m_lightGroups,
-            "groupeddiffuseresults", groupedDiffuseDirect,
-            "groupedspecularresults", groupedSpecularDirect,
-            "groupedunshadoweddiffuseresults", groupedUnshadowedDiffuseDirect,
-            "groupedunshadowedspecularresults", groupedUnshadowedSpecularDirect
-            //*/
-
-        );
+                "lightgroups", m_lightGroups,
+                "groupeddiffuseresults", groupedDiffuseDirect,
+                "groupedspecularresults", groupedSpecularDirect,
+                "groupedunshadoweddiffuseresults", groupedUnshadowedDiffuseDirect,
+                "groupedunshadowedspecularresults", groupedUnshadowedSpecularDirect
+            );
+        } else {
+            directlighting(this, lights,
+                "diffuseresult", diffuseDirect,
+                "specularresult", specularDirect
+            );
+        }
 
         color diffuseIndirect = indirectdiffuse(P, normalize(N), m_nSamplesDiffuse);
-        color diffuseLighting = diffuseDirect + diffuseIndirect;
-
         color specularIndirect = indirectspecular(this);
-        color specularLighting = specularDirect + specularIndirect;
 
-        color diffuseOutput = diffuseColor * diffuseLighting;
-        color specularOutput = specularColor * specularLighting;
-
-        Ci += diffuseOutput + specularOutput;
+        Ci += diffuseColor  * (diffuseDirect  + diffuseIndirect ) \
+            + specularColor * (specularDirect + specularIndirect);
 
         if (depth == 0) {
 
-            writeaov("DiffuseDirect", diffuseDirect);
-            writeaov("SpecularDirect", specularDirect);
-
-            writeaov("DiffuseDirectNoShadow", unshadowedDiffuseDirect);
-            writeaov("SpecularDirectNoShadow", unshadowedSpecularDirect);
-
-            // We find these shadows make a bit more sense.
-            writeaov("DiffuseShadowMult", diffuseDirect / unshadowedDiffuseDirect);
-            writeaov("SpecularShadowMult", specularDirect / unshadowedSpecularDirect);
-
-            if (WriteGPAOVs) {
-                writeaov("DiffuseShadow" , diffuseColor  * (unshadowedDiffuseDirect  - diffuseDirect)); // Same as GP.
-                writeaov("SpecularShadow", specularColor * (unshadowedSpecularDirect - specularDirect)); // Same as GP.
-            }
+            writeAOVs("%s",
+                diffuseDirect, specularDirect,
+                unshadowedDiffuseDirect, unshadowedSpecularDirect,
+                diffuseIndirect
+            );
 
             writeaov("DiffuseColor", diffuseColor); // Not written by GP.
-
             writeaov("DiffuseIndirect", diffuseIndirect); // Not written by GP.
             writeaov("SpecularIndirect", specularIndirect); // Same as GP.
 
-            writeaov("Diffuse", diffuseOutput); // Same as GP.
-            writeaov("Specular", specularColor * specularDirect); // DIRECT ONLY! Same as GP.
-
             uniform float i;
             for (i = 0; i < m_nLightGroups; i += 1) {
-                writeaov(format("GroupedDiffuse_%s", m_lightGroups[i]), groupedDiffuseDirect[i]);
-                writeaov(format("GroupedSpecular_%s", m_lightGroups[i]), groupedSpecularDirect[i]);
+                writeAOVs(concat("Grouped%s_", m_lightGroups[i]),
+                    groupedDiffuseDirect[i],
+                    groupedSpecularDirect[i],
+                    groupedUnshadowedDiffuseDirect[i],
+                    groupedUnshadowedSpecularDirect[i],
+                    color(0)
+                );
             }
 
         }
 
     }
+
 
     public void evaluateSamples(string distribution; output __radiancesample samples[]) {
         if (distribution == "diffuse" && m_nSamplesDiffuse > 0) {
