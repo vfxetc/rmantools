@@ -15,17 +15,24 @@ extensions pixar {} {
 
         codegenhints {
             shaderobject {
+                begin {
+                    ior
+                    mediaIor
+                }
                 initDiffuse {
                     diffuseColor
-                    ambientColor
+                    nDiffuseSamples
                 }
                 initSpecular {
                     specularColor
-                    roughness
+                    specularRoughness
+                    specularAnisotropy
+                    nSpecularSamples
                 }
                 lighting {
                     f:initDiffuse
                     f:initSpecular
+                    WriteGPAOVs
                 }
             }
         }
@@ -35,20 +42,57 @@ extensions pixar {} {
             default {1 1 1}
         }
 
-        parameter color ambientColor {
-            provider parameterlist
-            default {1 1 1}
-        }
-
         parameter color specularColor {
             provider parameterlist
             default {1 1 1}
         }
 
-        parameter float roughness {
+        parameter float specularRoughness {
             provider parameterlist
-            default 0.1
+            default 0.001
         }
+
+        parameter float specularAnisotropy {
+            provider parameterlist
+            subtype slider
+            range {-1 1 .0001}
+            default 0
+        } 
+
+        parameter float ior {
+            label "IOR"
+            provider parameterlist
+            subtype slider
+            range {1 2.5 .01}
+            default 1.5 
+        }
+
+        parameter float mediaIor {
+            label "Media IOR"
+            detail cantvary
+            subtype slider 
+            range {1 2.5 .01}
+            default 1 
+        }
+
+        parameter float WriteGPAOVs {
+            detail cantvary
+            provider parameterlist
+            default 0
+        }
+
+        parameter float nDiffuseSamples {
+            detail cantvary
+            provider parameterlist
+            default 256
+        }
+
+        parameter float nSpecularSamples {
+            detail cantvary
+            provider parameterlist
+            default 16
+        }
+
 
         RSLSource ShaderPipeline _thisfile_
 
@@ -75,16 +119,8 @@ RSLINJECT_shaderdef
     RSLINJECT_members
 
 
-    uniform float specularRoughness = .00001;
-
     // Signal that we don't do anything special with opacity.
     uniform float __computesOpacity = 0;
-
-    uniform float m_nSamplesSpecular = 36;
-    uniform float m_nSamplesDiffuse = 256;
-
-    uniform float m_ior = 1.8;
-    uniform float m_mediaIor = 1;
 
     stdrsl_ShadingContext m_shadingCtx;
     stdrsl_Fresnel m_fresnel;
@@ -94,9 +130,6 @@ RSLINJECT_shaderdef
     uniform string m_lightGroups[];
     uniform float m_nLightGroups;
 
-    // Should we write out all of the GP AOVs (we know about)?
-    uniform float WriteGPAOVs = 0;
-
 
     public void construct() {
         m_shadingCtx->construct();
@@ -105,16 +138,14 @@ RSLINJECT_shaderdef
     }
 
     public void begin() {
+        RSLINJECT_begin
         m_shadingCtx->init();
-        m_fresnel->init(m_shadingCtx, m_mediaIor, m_ior);
-    }
-
-    public void prelighting(output color Ci, Oi) {
+        m_fresnel->init(m_shadingCtx, mediaIor, ior);
     }
 
     public void initDiffuse() {
         RSLINJECT_initDiffuse
-        m_diffuse->init(m_shadingCtx, color(m_fresnel->m_Kt), 1, m_nSamplesDiffuse);
+        m_diffuse->init(m_shadingCtx, color(m_fresnel->m_Kt), 1, nDiffuseSamples);
     }
 
     public void initSpecular() {
@@ -122,10 +153,10 @@ RSLINJECT_shaderdef
         m_specular->init(m_shadingCtx,
             color(m_fresnel->m_Kr), // The fresnel is not automatically used by the spec.
             specularRoughness,
-            0, // Anistrophy ratio.
+            specularAnisotropy,
             1, // Roughness scale.
             1, // Minimum samples.
-            m_nSamplesSpecular // Maximum samples.
+            nSpecularSamples // Maximum samples.
         );
     }
 
@@ -193,14 +224,15 @@ RSLINJECT_shaderdef
             );
         }
 
-        color diffuseIndirect = indirectdiffuse(P, normalize(N), m_nSamplesDiffuse);
+
+        color diffuseIndirect = indirectdiffuse(P, normalize(N), nDiffuseSamples);
         color specularIndirect = indirectspecular(this);
 
         Ci += diffuseColor  * (diffuseDirect  + diffuseIndirect ) \
             + specularColor * (specularDirect + specularIndirect);
 
         if (depth == 0) {
-
+            
             writeAOVs("%s",
                 diffuseDirect, specularDirect,
                 unshadowedDiffuseDirect, unshadowedSpecularDirect,
@@ -228,16 +260,16 @@ RSLINJECT_shaderdef
 
 
     public void evaluateSamples(string distribution; output __radiancesample samples[]) {
-        if (distribution == "diffuse" && m_nSamplesDiffuse > 0) {
+        if (distribution == "diffuse" && nDiffuseSamples > 0) {
             m_diffuse->evalDiffuseSamps(m_shadingCtx, m_fresnel, samples);
         }
-        if (distribution != "diffuse" && m_nSamplesSpecular > 0) {
+        if (distribution != "diffuse" && nSpecularSamples > 0) {
             m_specular->evalSpecularSamps(m_shadingCtx, m_fresnel, samples);
         }
     }
 
     public void generateSamples(string distribution; output __radiancesample samples[]) {
-        if (distribution != "diffuse" && m_nSamplesSpecular > 0) {
+        if (distribution != "diffuse" && nSpecularSamples > 0) {
             m_specular->genSpecularSamps(m_shadingCtx, m_fresnel, distribution, samples);
         }
     }
