@@ -80,7 +80,7 @@ RSLINJECT_shaderdef
     uniform float specularRoughness = .008;
     uniform float __computesOpacity = 0;
 
-    uniform float m_nSamplesSpec = 36;
+    uniform float m_nSamplesSpecular = 36;
     uniform float m_nSamplesDiffuse = 256;
 
     uniform float m_ior = 1.8;
@@ -98,6 +98,7 @@ RSLINJECT_shaderdef
 
     public void begin() {
         m_shadingCtx->init();
+        m_fresnel->init(m_shadingCtx, m_mediaIor, m_ior);
     }
 
     public void prelighting(output color Ci, Oi) {
@@ -105,19 +106,18 @@ RSLINJECT_shaderdef
 
     public void initDiffuse() {
         RSLINJECT_initDiffuse
-        m_diffuse->init(m_shadingCtx, color(1), 1, m_nSamplesDiffuse);
+        m_diffuse->init(m_shadingCtx, color(m_fresnel->m_Kt), 1, m_nSamplesDiffuse);
     }
 
     public void initSpecular() {
         RSLINJECT_initSpecular
-        m_fresnel->init(m_shadingCtx, m_mediaIor, m_ior);
         m_specular->init(m_shadingCtx,
-            color(1), // We will do the mult later.
+            color(m_fresnel->m_Kr), // The fresnel is not automatically used by the spec.
             specularRoughness,
             0, // Anistrophy ratio.
             1, // Roughness scale.
             1, // Minimum samples.
-            m_nSamplesSpec // Maximum samples.
+            m_nSamplesSpecular // Maximum samples.
         );
     }
 
@@ -181,15 +181,16 @@ RSLINJECT_shaderdef
     }
 
     public void evaluateSamples(string distribution; output __radiancesample samples[]) {
-        if(distribution == "diffuse") {
+        if (distribution == "diffuse" && m_nSamplesDiffuse > 0) {
             m_diffuse->evalDiffuseSamps(m_shadingCtx, m_fresnel, samples);
-        } else if (distribution == "specular") {
+        }
+        if (distribution != "diffuse" && m_nSamplesSpecular > 0) {
             m_specular->evalSpecularSamps(m_shadingCtx, m_fresnel, samples);
         }
     }
 
     public void generateSamples(string distribution; output __radiancesample samples[]) {
-        if (distribution != "diffuse" && m_nSamplesSpec > 0) {
+        if (distribution != "diffuse" && m_nSamplesSpecular > 0) {
             m_specular->genSpecularSamps(m_shadingCtx, m_fresnel, distribution, samples);
         }
     }
