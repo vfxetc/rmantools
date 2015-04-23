@@ -1,5 +1,5 @@
-#ifndef KS_REYES_DIFFUSE_CLASS_H
-#define KS_REYES_DIFFUSE_CLASS_H
+#ifndef KS_REYES_PLASTIC_H
+#define KS_REYES_PLASTIC_H
 /*
 <rman id="rslt">
 slim 1 extensions pixar_db {
@@ -77,7 +77,9 @@ RSLINJECT_shaderdef
     RSLINJECT_members
 
 
-    uniform float specularRoughness = .008;
+    uniform float specularRoughness = .00001;
+
+    // Signal that we don't do anything special with opacity.
     uniform float __computesOpacity = 0;
 
     uniform float m_nSamplesSpecular = 36;
@@ -91,9 +93,17 @@ RSLINJECT_shaderdef
     stdrsl_Lambert m_diffuse;
     stdrsl_SpecularAS m_specular;
 
+    uniform string m_lightGroups[];
+    uniform float m_nLightGroups;
+
+    // Should we write out all of the GP AOVs (we know about)?
+    uniform float WriteGPAOVs = 0;
+
 
     public void construct() {
         m_shadingCtx->construct();
+        option("user:lightgroups",  m_lightGroups);
+        m_nLightGroups = arraylength(m_lightGroups);
     }
 
     public void begin() {
@@ -136,18 +146,24 @@ RSLINJECT_shaderdef
         color specularDirect = 0;
         color unshadowedDiffuseDirect = 0;
         color unshadowedSpecularDirect = 0;
+        color groupedDiffuseDirect[];
+        color groupedSpecularDirect[];
+        color groupedUnshadowedDiffuseDirect[];
+        color groupedUnshadowedSpecularDirect[];
+
         directlighting(this, lights,
             "diffuseresult", diffuseDirect,
             "specularresult", specularDirect,
             "unshadoweddiffuseresult", unshadowedDiffuseDirect,
-            "unshadowedspecularresult", unshadowedSpecularDirect
+            "unshadowedspecularresult", unshadowedSpecularDirect,
 
-            /*
-            "groupeddiffuseresult", groupedDiffuseDirect,
-            "groupedspecularresult", groupedSpecularDirect,
-            "groupedunshadoweddiffuseresult", groupedUnshadowedDiffuseDirect,
-            "groupedunshadowedspecularresult", groupedUnshadowedSpecularDirect
-            */
+            //*
+            "lightgroups", m_lightGroups,
+            "groupeddiffuseresults", groupedDiffuseDirect,
+            "groupedspecularresults", groupedSpecularDirect,
+            "groupedunshadoweddiffuseresults", groupedUnshadowedDiffuseDirect,
+            "groupedunshadowedspecularresults", groupedUnshadowedSpecularDirect
+            //*/
 
         );
 
@@ -163,19 +179,36 @@ RSLINJECT_shaderdef
         Ci += diffuseOutput + specularOutput;
 
         if (depth == 0) {
+
             writeaov("DiffuseDirect", diffuseDirect);
             writeaov("SpecularDirect", specularDirect);
+
             writeaov("DiffuseDirectNoShadow", unshadowedDiffuseDirect);
             writeaov("SpecularDirectNoShadow", unshadowedSpecularDirect);
-            // writeaov("DiffuseShadow", diffuseColor * (unshadowedDiffuseDirect - diffuseDirect)); // Same as GP.
+
+            // We find these shadows make a bit more sense.
             writeaov("DiffuseShadowMult", diffuseDirect / unshadowedDiffuseDirect);
             writeaov("SpecularShadowMult", specularDirect / unshadowedSpecularDirect);
-            // writeaov("SpecularShadow", specularColor * (unshadowedSpecularDirect - specularDirect)); // Same as GP.
-            writeaov("DiffuseColor", diffuseColor);
+
+            if (WriteGPAOVs) {
+                writeaov("DiffuseShadow" , diffuseColor  * (unshadowedDiffuseDirect  - diffuseDirect)); // Same as GP.
+                writeaov("SpecularShadow", specularColor * (unshadowedSpecularDirect - specularDirect)); // Same as GP.
+            }
+
+            writeaov("DiffuseColor", diffuseColor); // Not written by GP.
+
             writeaov("DiffuseIndirect", diffuseIndirect); // Not written by GP.
             writeaov("SpecularIndirect", specularIndirect); // Same as GP.
+
             writeaov("Diffuse", diffuseOutput); // Same as GP.
             writeaov("Specular", specularColor * specularDirect); // DIRECT ONLY! Same as GP.
+
+            uniform float i;
+            for (i = 0; i < m_nLightGroups; i += 1) {
+                writeaov(format("GroupedDiffuse_%s", m_lightGroups[i]), groupedDiffuseDirect[i]);
+                writeaov(format("GroupedSpecular_%s", m_lightGroups[i]), groupedSpecularDirect[i]);
+            }
+
         }
 
     }
