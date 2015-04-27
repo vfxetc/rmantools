@@ -24,10 +24,12 @@ extensions pixar {} {
                     bumpScale
                 }
                 initDiffuse {
+                    f:prelighting
                     diffuseColor
                     nDiffuseSamples
                 }
                 initSpecular {
+                    f:prelighting
                     specularColor
                     specularRoughness
                     specularAnisotropy
@@ -162,15 +164,8 @@ RSLINJECT_shaderdef
     {
         RSLINJECT_displacement
         if (bumpAmount != 0 && bumpScale != 0) {
-
-            point Pd = P + m_shadingCtx->m_Nn * (bumpAmount * bumpScale);
-            normal N = normalize(calculatenormal(Pd));
-
-            m_shadingCtx->m_Nn = N;
+            m_shadingCtx->displace(m_shadingCtx->m_Ns, bumpAmount * bumpScale, "bump");
             m_shadingCtx->reinit();
-
-            // We should be able to use this, but I can't get it do to what I want:
-            // m_shadingCtx->displace(m_shadingCtx->m_Ns, bumpAmount * bumpScale, "bump");
         }
     }
 
