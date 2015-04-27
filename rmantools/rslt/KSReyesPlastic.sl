@@ -16,10 +16,12 @@ extensions pixar {} {
         codegenhints {
             shaderobject {
                 begin {
-                    bumpAmount
-                    bumpScale
                     ior
                     mediaIor
+                }
+                displacement {
+                    bumpAmount
+                    bumpScale
                 }
                 initDiffuse {
                     diffuseColor
@@ -151,17 +153,25 @@ RSLINJECT_shaderdef
     }
 
     public void begin() {
-        extern normal N;
-
         RSLINJECT_begin
-
-        if (bumpAmount != 0 && bumpScale != 0) {
-            point Pd = P + normalize(N) * (bumpAmount * bumpScale);
-            N = calculatenormal(Pd);
-        }
-
         m_shadingCtx->init();
         m_fresnel->init(m_shadingCtx, mediaIor, ior);
+    }
+
+    public void displacement(output point P; output normal N)
+    {
+        RSLINJECT_displacement
+        if (bumpAmount != 0 && bumpScale != 0) {
+
+            point Pd = P + m_shadingCtx->m_Nn * (bumpAmount * bumpScale);
+            normal N = normalize(calculatenormal(Pd));
+
+            m_shadingCtx->m_Nn = N;
+            m_shadingCtx->reinit();
+
+            // We should be able to use this, but I can't get it do to what I want:
+            // m_shadingCtx->displace(m_shadingCtx->m_Ns, bumpAmount * bumpScale, "bump");
+        }
     }
 
     public void initDiffuse() {

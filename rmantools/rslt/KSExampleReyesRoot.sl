@@ -15,12 +15,22 @@ extensions pixar {} {
 
         codegenhints {
             shaderobject {
+
+                displacement {
+                    bumpAmount
+                }
                 surface {
                     surfaceColor
                 }
             }
         }
     
+        parameter float bumpAmount {
+            label "Bump Amount"
+            provider parameterlist
+            default 0
+        }
+
         parameter color surfaceColor {
             label "Surface Color"
             description {The color of the surface.}
@@ -41,6 +51,16 @@ RSLINJECT_shaderdef
 {
 
     RSLINJECT_members
+
+    public void displacement(output point P; output normal N)
+    {
+        RSLINJECT_displacement
+
+        if (bumpAmount != 0) {
+            point Pd = P + bumpAmount * normalize(N);
+            N = calculatenormal(Pd);
+        }
+    }
 
     public void surface(output color Ci; output color Oi;)
     {
