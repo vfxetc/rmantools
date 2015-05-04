@@ -18,6 +18,7 @@ extensions pixar {} {
                 begin {
                     ior
                     mediaIor
+                    inputAOV
                 }
                 displacement {
                     bumpAmount
@@ -110,6 +111,12 @@ extensions pixar {} {
             default 1
         }
 
+        # This exists only to trigger others nodes to evaluate, and not
+        # be something that actually is used to render.
+        parameter float inputAOV {
+            provider parameterlist
+            default 0
+        }
 
         RSLSource ShaderPipeline _thisfile_
 
