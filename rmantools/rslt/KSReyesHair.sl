@@ -15,100 +15,150 @@ extensions pixar {} {
 
         codegenhints {
             shaderobject {
-                begin {
-                    ior
-                    mediaIor
-                }
-                displacement {
-                    bumpAmount
-                    bumpScale
-                }
+
                 initDiffuse {
                     f:prelighting
-                    diffuseColor
+                    diffuseRootColor
+                    diffuseTipColor
+                    diffuseGain
+                    diffuseReflectionGain
+                    diffuseTransmitGain
                     nDiffuseSamples
                 }
+
                 initSpecular {
                     f:prelighting
                     specularColor
-                    specularRoughness
-                    specularAnisotropy
+                    specularShift
+                    specularWidth
+                    specularTransmitGain
+                    specularReflectionGain
+    
                     nSpecularSamples
                 }
+
                 lighting {
                     f:initDiffuse
                     f:initSpecular
                     WriteGPAOVs
                 }
+
             }
         }
     
-        parameter color diffuseColor {
-            provider parameterlist
-            default {1 1 1}
+        collection void Diffuse {
+
+            parameter color diffuseRootColor {
+                default {1 1 1}
+            }
+
+            parameter color diffuseTipColor {
+                default {1 1 1}
+            }
+
         }
 
-        parameter color specularColor {
-            provider parameterlist
-            default {1 1 1}
+        collection void Specular {
+
+            parameter color specularColor {
+                default {1 1 1}
+            }
+            
+            parameter float specularShift {
+                detail cantvary
+                subtype slider 
+                range {5 10 0.1}
+                default 7.5
+            }
+
+            parameter float specularWidth {
+                detail cantvary
+                subtype slider 
+                range {5 10 0.1}
+                default 7.5
+            }
+
         }
 
-        parameter float specularRoughness {
-            provider parameterlist
-            default 0.001
+        # parameter float ior {
+        #     label "IOR"
+        #     subtype slider
+        #     range {1 2.5 .01}
+        #     default 1.5 
+        # }
+        # parameter float mediaIor {
+        #     label "Media IOR"
+        #     detail cantvary
+        #     subtype slider 
+        #     range {1 2.5 .01}
+        #     default 1 
+        # }
+
+        collection void Gains {
+    
+            parameter float diffuseGain {
+                detail cantvary
+                subtype slider 
+                range {0 1 0.01}
+                default 1
+            }
+
+            parameter float diffuseReflectionGain {
+                detail cantvary
+                subtype slider 
+                range {0 1 0.01}
+                default 1
+            }
+
+            parameter float diffuseTransmitGain {
+                detail cantvary
+                subtype slider 
+                range {0 1 0.01}
+                default 1
+            }
+
+            parameter float specularReflectionGain {
+                detail cantvary
+                subtype slider 
+                range {0 1 0.01}
+                default 0.04
+            }
+
+            parameter float specularTransmitGain {
+                detail cantvary
+                subtype slider 
+                range {0 1 0.01}
+                default 0.5
+            }
+
+        }
+    
+        collection void Details {
+
+            parameter float nDiffuseSamples {
+                detail cantvary
+                subtype slider 
+                range {0 1024 16}
+                default 256
+            }
+
+            parameter float nSpecularSamples {
+                detail cantvary
+                subtype slider 
+                range {0 64 1}
+                default 16
+            }
+
+            parameter float WriteGPAOVs {
+                detail cantvary
+                subtype switch
+                default 0
+            }
+
+
         }
 
-        parameter float specularAnisotropy {
-            provider parameterlist
-            subtype slider
-            range {-1 1 .0001}
-            default 0
-        } 
 
-        parameter float ior {
-            label "IOR"
-            provider parameterlist
-            subtype slider
-            range {1 2.5 .01}
-            default 1.5 
-        }
-
-        parameter float mediaIor {
-            label "Media IOR"
-            detail cantvary
-            subtype slider 
-            range {1 2.5 .01}
-            default 1 
-        }
-
-        parameter float WriteGPAOVs {
-            detail cantvary
-            provider parameterlist
-            default 0
-        }
-
-        parameter float nDiffuseSamples {
-            detail cantvary
-            provider parameterlist
-            default 256
-        }
-
-        parameter float nSpecularSamples {
-            detail cantvary
-            provider parameterlist
-            default 16
-        }
-
-        parameter float bumpAmount {
-            provider parameterlist
-            default 0
-        }
-
-        parameter float bumpScale {
-            detail cantvary
-            provider parameterlist
-            default 1
-        }
 
 
         RSLSource ShaderPipeline _thisfile_
@@ -146,6 +196,7 @@ RSLINJECT_shaderdef
     uniform string m_lightGroups[];
     uniform float m_nLightGroups;
 
+    varying color diffuseColor;
 
     public void construct() {
         m_shadingCtx->construct();
@@ -155,25 +206,39 @@ RSLINJECT_shaderdef
 
     public void begin() {
         RSLINJECT_begin
-        m_shadingCtx->init();
-        m_fresnel->init(m_shadingCtx, mediaIor, ior);
-    }
 
-    public void displacement(output point P; output normal N)
-    {
-        RSLINJECT_displacement
-        if (bumpAmount != 0 && bumpScale != 0) {
-            m_shadingCtx->displace(m_shadingCtx->m_Ns, bumpAmount * bumpScale, "bump");
-            m_shadingCtx->reinit();
+        m_shadingCtx->initHair(0); // 0 -> trust the normals.
+
+        normal surfaceN = N;
+
+        // Get the scalp surface normal
+        if (readprimvar("surface_normal", surfaceN)) { // maya fur
+            m_shadingCtx->m_Nn = normalize(surfaceN);
+        } else if (readprimvar("N_srf", surfaceN)) { // shave
+            m_shadingCtx->m_Nn = normalize(surfaceN); 
+        } else if (readprimvar("n_surf", surfaceN)) { // yeti
+            m_shadingCtx->m_Nn = normalize(surfaceN);
         }
+
+        // Reinit (excluding bitangent).
+        vector bitangent = m_shadingCtx->m_Bitangent;
+        m_shadingCtx->reinit();
+        m_shadingCtx->m_Bitangent = bitangent;
+
+        // m_fresnel->init(m_shadingCtx, mediaIor, ior);
+
     }
 
     public void initDiffuse() {
         RSLINJECT_initDiffuse
+
+        // We don't apply this until much later.
+        diffuseColor = mix(diffuseRootColor, diffuseTipColor, v);
+
         m_hair->initDiffuse(m_shadingCtx,
-            1, // diffuse gain
-            m_fresnel->m_Kr, // diffuse reflection gain
-            m_fresnel->m_Kt, // diffuse transmit gain
+            diffuseGain, // diffuse gain
+            diffuseReflectionGain, // diffuse reflection gain
+            diffuseTransmitGain, // diffuse transmit gain
             color(1), // root color
             color(1)  // tip color
         );
@@ -182,10 +247,10 @@ RSLINJECT_shaderdef
     public void initSpecular() {
         RSLINJECT_initSpecular
         m_hair->initSpecular(m_shadingCtx, nSpecularSamples,
-            color(m_fresnel->m_Kt), // transmit color
-            7.5, // shift highlight from root to tip [5, 10]
-            7.5, // highlight width [5, 10]
-            0.1, // iorRefl ??
+            color(specularTransmitGain), // color(m_fresnel->m_Kt), // transmit color
+            specularShift, // shift highlight from root to tip [5, 10]
+            specularWidth, // highlight width [5, 10]
+            specularReflectionGain, // iorRefl ??
             -1 // index (for picking directions)
         );
     }
@@ -245,12 +310,20 @@ RSLINJECT_shaderdef
                 "groupeddiffuseresults", groupedDiffuseDirect,
                 "groupedspecularresults", groupedSpecularDirect,
                 "groupedunshadoweddiffuseresults", groupedUnshadowedDiffuseDirect,
-                "groupedunshadowedspecularresults", groupedUnshadowedSpecularDirect
+                "groupedunshadowedspecularresults", groupedUnshadowedSpecularDirect,
+
+                "integrationdomain", "sphere", 
+                "mis", 1
             );
         } else {
             directlighting(this, lights,
                 "diffuseresult", diffuseDirect,
-                "specularresult", specularDirect
+                "specularresult", specularDirect,
+                "unshadoweddiffuseresult", unshadowedDiffuseDirect,
+                "unshadowedspecularresult", unshadowedSpecularDirect,
+                
+                "integrationdomain", "sphere", 
+                "mis", 1
             );
         }
 
