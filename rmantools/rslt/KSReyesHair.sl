@@ -1,5 +1,5 @@
-#ifndef KS_REYES_PLASTIC_H
-#define KS_REYES_PLASTIC_H
+#ifndef KS_REYES_HAIR_H
+#define KS_REYES_HAIR_H
 /*
 <rman id="rslt">
 slim 1 extensions pixar_db {
@@ -21,9 +21,9 @@ extensions pixar {} {
                     diffuseRootColor
                     diffuseTipColor
                     diffuseGain
-                    diffuseReflectionGain
+                    diffuseReflectGain
                     diffuseTransmitGain
-                    nDiffuseSamples
+                    diffuseSamples
                 }
 
                 initSpecular {
@@ -32,15 +32,16 @@ extensions pixar {} {
                     specularShift
                     specularWidth
                     specularTransmitGain
-                    specularReflectionGain
+                    specularReflectGain
     
-                    nSpecularSamples
+                    specularSamples
                 }
 
                 lighting {
                     f:initDiffuse
                     f:initSpecular
                     WriteGPAOVs
+                    lightingSamples
                 }
 
             }
@@ -100,24 +101,24 @@ extensions pixar {} {
                 detail cantvary
                 subtype slider 
                 range {0 1 0.01}
-                default 1
+                default 0.5
             }
 
-            parameter float diffuseReflectionGain {
+            parameter float diffuseReflectGain {
                 detail cantvary
                 subtype slider 
                 range {0 1 0.01}
-                default 1
+                default 0.5
             }
 
             parameter float diffuseTransmitGain {
                 detail cantvary
                 subtype slider 
                 range {0 1 0.01}
-                default 1
+                default 0.5
             }
 
-            parameter float specularReflectionGain {
+            parameter float specularReflectGain {
                 detail cantvary
                 subtype slider 
                 range {0 1 0.01}
@@ -135,18 +136,28 @@ extensions pixar {} {
     
         collection void Details {
 
-            parameter float nDiffuseSamples {
+            parameter float diffuseSamples {
                 detail cantvary
                 subtype slider 
-                range {0 1024 16}
-                default 256
+                range {0 128 1}
+                default 8
             }
 
-            parameter float nSpecularSamples {
+            parameter float specularSamples {
                 detail cantvary
                 subtype slider 
                 range {0 64 1}
-                default 16
+                default 8
+            }
+
+            parameter float lightingSamples {
+                description {
+                    Override the number of direct lighting samples.
+                }
+                detail cantvary
+                subtype slider 
+                range {0 64 1}
+                default 8
             }
 
             parameter float WriteGPAOVs {
@@ -237,7 +248,7 @@ RSLINJECT_shaderdef
 
         m_hair->initDiffuse(m_shadingCtx,
             diffuseGain, // diffuse gain
-            diffuseReflectionGain, // diffuse reflection gain
+            diffuseReflectGain, // diffuse Reflect gain
             diffuseTransmitGain, // diffuse transmit gain
             color(1), // root color
             color(1)  // tip color
@@ -246,11 +257,11 @@ RSLINJECT_shaderdef
 
     public void initSpecular() {
         RSLINJECT_initSpecular
-        m_hair->initSpecular(m_shadingCtx, nSpecularSamples,
+        m_hair->initSpecular(m_shadingCtx, specularSamples,
             color(specularTransmitGain), // color(m_fresnel->m_Kt), // transmit color
             specularShift, // shift highlight from root to tip [5, 10]
             specularWidth, // highlight width [5, 10]
-            specularReflectionGain, // iorRefl ??
+            specularReflectGain, // iorRefl ??
             -1 // index (for picking directions)
         );
     }
@@ -298,6 +309,8 @@ RSLINJECT_shaderdef
         color groupedUnshadowedDiffuseDirect[];
         color groupedUnshadowedSpecularDirect[];
 
+        uniform float _lightingSamples = (m_shadingCtx->m_SampleMgr->m_PathTracing) == 1 ? 1 : lightingSamples;
+
         if (depth == 0 && m_nLightGroups != 0) {
             // We only need all of this data when we are writing AOVs.
             directlighting(this, lights,
@@ -313,7 +326,8 @@ RSLINJECT_shaderdef
                 "groupedunshadowedspecularresults", groupedUnshadowedSpecularDirect,
 
                 "integrationdomain", "sphere", 
-                "mis", 1
+                "mis", 1,
+                "arealightsamples", _lightingSamples
             );
         } else {
             directlighting(this, lights,
@@ -321,14 +335,15 @@ RSLINJECT_shaderdef
                 "specularresult", specularDirect,
                 "unshadoweddiffuseresult", unshadowedDiffuseDirect,
                 "unshadowedspecularresult", unshadowedSpecularDirect,
-                
+
                 "integrationdomain", "sphere", 
-                "mis", 1
+                "mis", 1,
+                "arealightsamples", _lightingSamples
             );
         }
 
 
-        color diffuseIndirect = indirectdiffuse(P, normalize(N), nDiffuseSamples);
+        color diffuseIndirect = indirectdiffuse(P, normalize(N), diffuseSamples);
         color specularIndirect = indirectspecular(this);
 
         Ci += diffuseColor  * (diffuseDirect  + diffuseIndirect ) \
@@ -363,16 +378,16 @@ RSLINJECT_shaderdef
 
 
     public void evaluateSamples(string distribution; output __radiancesample samples[]) {
-        if (distribution == "diffuse" && nDiffuseSamples > 0) {
+        if (distribution == "diffuse" && diffuseSamples > 0) {
             m_hair->evalDiffuseSamps(m_shadingCtx, samples);
         }
-        if (distribution != "diffuse" && nSpecularSamples > 0) {
+        if (distribution != "diffuse" && specularSamples > 0) {
             m_hair->evalSpecularSamps(m_shadingCtx, samples);
         }
     }
 
     public void generateSamples(string distribution; output __radiancesample samples[]) {
-        if (distribution != "diffuse" && nSpecularSamples > 0) {
+        if (distribution != "diffuse" && specularSamples > 0) {
             m_hair->genSpecularSamps(m_shadingCtx, samples);
         }
     }
