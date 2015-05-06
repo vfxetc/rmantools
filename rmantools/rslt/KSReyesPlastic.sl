@@ -15,107 +15,132 @@ extensions pixar {} {
 
         codegenhints {
             shaderobject {
+
                 begin {
                     ior
                     mediaIor
                     inputAOV
                 }
+
                 displacement {
                     bumpAmount
                     bumpScale
                 }
+
                 initDiffuse {
                     f:prelighting
                     diffuseColor
-                    nDiffuseSamples
+                    diffuseSamples
                 }
+
                 initSpecular {
                     f:prelighting
                     specularColor
                     specularRoughness
                     specularAnisotropy
-                    nSpecularSamples
+                    specularSamples
                 }
+
                 lighting {
                     f:initDiffuse
                     f:initSpecular
-                    WriteGPAOVs
+                    writeGPAOVs
                 }
+
             }
         }
     
-        parameter color diffuseColor {
-            provider parameterlist
-            default {1 1 1}
+        collection void Basics {
+
+            parameter color diffuseColor {
+                default {1 1 1}
+            }
+
+            parameter color specularColor {
+                default {1 1 1}
+            }
+
+            parameter float specularRoughness {
+                default 0.001
+            }
+
+            parameter float specularAnisotropy {
+                subtype slider
+                range {-1 1 .0001}
+                default 0
+            } 
+
+            parameter float ior {
+                label "IOR"
+                description {
+                    Index of Refraction of the surface.
+                }
+                subtype slider
+                range {1 2.5 .01}
+                default 1.5 
+            }
+
+            parameter float mediaIor {
+                label "Media IOR"
+                description {
+                    Index of Refraction of the media that the surface is in (e.g. the air).
+                }
+                subtype slider 
+                range {1 2.5 .01}
+                default 1 
+            }
+
         }
 
-        parameter color specularColor {
-            provider parameterlist
-            default {1 1 1}
+        collection void Bump {
+
+            parameter float bumpAmount {
+                default 0
+            }
+
+            parameter float bumpScale {
+                detail cantvary
+                subtype slider 
+                range {0 1 0.001}
+                default 1
+            }
+
         }
 
-        parameter float specularRoughness {
-            provider parameterlist
-            default 0.001
-        }
+        collection void Details {
+        
+            parameter float diffuseSamples {
+                detail cantvary
+                subtype slider 
+                range {1 1024 1}
+                default 256
+            }
 
-        parameter float specularAnisotropy {
-            provider parameterlist
-            subtype slider
-            range {-1 1 .0001}
-            default 0
-        } 
+            parameter float specularSamples {
+                detail cantvary
+                subtype slider 
+                range {1 64 1}
+                default 16
+            }
 
-        parameter float ior {
-            label "IOR"
-            provider parameterlist
-            subtype slider
-            range {1 2.5 .01}
-            default 1.5 
-        }
+            parameter float writeGPAOVs {
+                label "Write GP AOVs"
+                description {
+                    Write all AOVs to be compatible with GP shaders.
+                }
+                detail cantvary
+                subtype switch
+                default 0
+            }
 
-        parameter float mediaIor {
-            label "Media IOR"
-            detail cantvary
-            subtype slider 
-            range {1 2.5 .01}
-            default 1 
-        }
+            parameter float inputAOV {
+                description {
+                    This exists only to trigger others nodes to evaluate, and 
+                    is not used in any way.
+                }
+                default 0
+            }
 
-        parameter float WriteGPAOVs {
-            detail cantvary
-            provider parameterlist
-            default 0
-        }
-
-        parameter float nDiffuseSamples {
-            detail cantvary
-            provider parameterlist
-            default 256
-        }
-
-        parameter float nSpecularSamples {
-            detail cantvary
-            provider parameterlist
-            default 16
-        }
-
-        parameter float bumpAmount {
-            provider parameterlist
-            default 0
-        }
-
-        parameter float bumpScale {
-            detail cantvary
-            provider parameterlist
-            default 1
-        }
-
-        # This exists only to trigger others nodes to evaluate, and not
-        # be something that actually is used to render.
-        parameter float inputAOV {
-            provider parameterlist
-            default 0
         }
 
         RSLSource ShaderPipeline _thisfile_
@@ -178,7 +203,7 @@ RSLINJECT_shaderdef
 
     public void initDiffuse() {
         RSLINJECT_initDiffuse
-        m_diffuse->init(m_shadingCtx, color(m_fresnel->m_Kt), 1, nDiffuseSamples);
+        m_diffuse->init(m_shadingCtx, color(m_fresnel->m_Kt), 1, diffuseSamples);
     }
 
     public void initSpecular() {
@@ -189,7 +214,7 @@ RSLINJECT_shaderdef
             specularAnisotropy,
             1, // Roughness scale.
             1, // Minimum samples.
-            nSpecularSamples // Maximum samples.
+            specularSamples // Maximum samples.
         );
     }
 
@@ -209,7 +234,7 @@ RSLINJECT_shaderdef
         writeaov(format(pattern, "DiffuseShadowMult"), diffuseDirect / unshadowedDiffuseDirect);
         writeaov(format(pattern, "SpecularShadowMult"), specularDirect / unshadowedSpecularDirect);
 
-        if (WriteGPAOVs) {
+        if (writeGPAOVs) {
             writeaov(format(pattern, "DiffuseShadow" ), diffuseColor  * (unshadowedDiffuseDirect  - diffuseDirect )); // Same as GP.
             writeaov(format(pattern, "SpecularShadow"), specularColor * (unshadowedSpecularDirect - specularDirect)); // Same as GP.
         }
@@ -260,7 +285,7 @@ RSLINJECT_shaderdef
         }
 
 
-        color diffuseIndirect = indirectdiffuse(P, normalize(N), nDiffuseSamples);
+        color diffuseIndirect = indirectdiffuse(P, normalize(N), diffuseSamples);
         color specularIndirect = indirectspecular(this);
 
         Ci += diffuseColor  * (diffuseDirect  + diffuseIndirect ) \
@@ -295,16 +320,16 @@ RSLINJECT_shaderdef
 
 
     public void evaluateSamples(string distribution; output __radiancesample samples[]) {
-        if (distribution == "diffuse" && nDiffuseSamples > 0) {
+        if (distribution == "diffuse" && diffuseSamples > 0) {
             m_diffuse->evalDiffuseSamps(m_shadingCtx, m_fresnel, samples);
         }
-        if (distribution != "diffuse" && nSpecularSamples > 0) {
+        if (distribution != "diffuse" && specularSamples > 0) {
             m_specular->evalSpecularSamps(m_shadingCtx, m_fresnel, samples);
         }
     }
 
     public void generateSamples(string distribution; output __radiancesample samples[]) {
-        if (distribution != "diffuse" && nSpecularSamples > 0) {
+        if (distribution != "diffuse" && specularSamples > 0) {
             m_specular->genSpecularSamps(m_shadingCtx, m_fresnel, distribution, samples);
         }
     }
