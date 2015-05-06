@@ -17,8 +17,6 @@ extensions pixar {} {
             shaderobject {
 
                 begin {
-                    ior
-                    mediaIor
                     inputAOV
                 }
 
@@ -27,15 +25,18 @@ extensions pixar {} {
                     bumpScale
                 }
 
+                prelighting {
+                    ior
+                    mediaIor
+                }
+
                 initDiffuse {
                     f:prelighting
-                    diffuseColor
                     diffuseSamples
                 }
 
                 initSpecular {
                     f:prelighting
-                    specularColor
                     specularRoughness
                     specularAnisotropy
                     specularSamples
@@ -44,6 +45,8 @@ extensions pixar {} {
                 lighting {
                     f:initDiffuse
                     f:initSpecular
+                    diffuseColor
+                    specularColor
                     writeGPAOVs
                 }
 
@@ -189,7 +192,6 @@ RSLINJECT_shaderdef
     public void begin() {
         RSLINJECT_begin
         m_shadingCtx->init();
-        m_fresnel->init(m_shadingCtx, mediaIor, ior);
     }
 
     public void displacement(output point P; output normal N)
@@ -199,6 +201,11 @@ RSLINJECT_shaderdef
             m_shadingCtx->displace(m_shadingCtx->m_Ns, bumpAmount * bumpScale, "bump");
             m_shadingCtx->reinit();
         }
+    }
+
+    public void prelighting(output color Ci, Oi) {
+        RSLINJECT_prelighting
+        m_fresnel->init(m_shadingCtx, mediaIor, ior);
     }
 
     public void initDiffuse() {
@@ -300,6 +307,7 @@ RSLINJECT_shaderdef
             );
 
             writeaov("DiffuseColor", diffuseColor); // Not written by GP.
+            writeaov("SpecularColor", specularColor); // Not written by GP.
             writeaov("DiffuseIndirect", diffuseIndirect); // Not written by GP.
             writeaov("SpecularIndirect", specularIndirect); // Same as GP.
 
