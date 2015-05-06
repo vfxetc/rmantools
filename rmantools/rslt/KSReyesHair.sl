@@ -16,8 +16,18 @@ extensions pixar {} {
         codegenhints {
             shaderobject {
 
+                begin {
+                    inputAOV
+                }
+
+                opacity {
+                    rootOpacity
+                    tipOpacity
+                }
+
                 initDiffuse {
                     f:prelighting
+
                     diffuseRootColor
                     diffuseTipColor
                     diffuseGain
@@ -28,20 +38,21 @@ extensions pixar {} {
 
                 initSpecular {
                     f:prelighting
-                    specularColor
+
+                    specularRootColor
+                    specularTipColor
                     specularShift
                     specularWidth
                     specularTransmitGain
                     specularReflectGain
-    
                     specularSamples
                 }
 
                 lighting {
                     f:initDiffuse
                     f:initSpecular
-                    WriteGPAOVs
                     lightingSamples
+                    writeGPAOVs
                 }
 
             }
@@ -61,7 +72,11 @@ extensions pixar {} {
 
         collection void Specular {
 
-            parameter color specularColor {
+            parameter color specularRootColor {
+                default {1 1 1}
+            }
+
+            parameter color specularTipColor {
                 default {1 1 1}
             }
             
@@ -81,19 +96,28 @@ extensions pixar {} {
 
         }
 
-        # parameter float ior {
-        #     label "IOR"
-        #     subtype slider
-        #     range {1 2.5 .01}
-        #     default 1.5 
-        # }
-        # parameter float mediaIor {
-        #     label "Media IOR"
-        #     detail cantvary
-        #     subtype slider 
-        #     range {1 2.5 .01}
-        #     default 1 
-        # }
+        collection void Opacity {
+
+            parameter color rootOpacity {
+                default {1 1 1}
+            }
+
+            parameter color tipOpacity {
+                default {1 1 1}
+            }
+
+            parameter float __computesOpacity {
+                label "Compute Opacity"
+                description {
+                    If the shader doesn't compute opacity, the renderer can
+                    take some shortcuts.
+                }
+                detail cantvary
+                subtype switch
+                default 0
+            }
+
+        }
 
         collection void Gains {
     
@@ -140,19 +164,20 @@ extensions pixar {} {
                 detail cantvary
                 subtype slider 
                 range {0 128 1}
-                default 8
+                default 16
             }
 
             parameter float specularSamples {
                 detail cantvary
                 subtype slider 
                 range {0 64 1}
-                default 8
+                default 4
             }
 
             parameter float lightingSamples {
                 description {
-                    Override the number of direct lighting samples.
+                    Override the number of direct lighting samples;
+                    hair doesn't usually need the normal amount.
                 }
                 detail cantvary
                 subtype slider 
@@ -160,12 +185,23 @@ extensions pixar {} {
                 default 8
             }
 
-            parameter float WriteGPAOVs {
+            parameter float writeGPAOVs {
+                label "Write GP AOVs"
+                description {
+                    Write all AOVs to be compatible with GP shaders.
+                }
                 detail cantvary
                 subtype switch
                 default 0
             }
 
+            parameter float inputAOV {
+                description {
+                    This exists only to trigger others nodes to evaluate, and 
+                    is not used in any way.
+                }
+                default 0
+            }
 
         }
 
@@ -197,17 +233,14 @@ RSLINJECT_shaderdef
     RSLINJECT_members
 
 
-    // Signal that we don't do anything special with opacity.
-    uniform float __computesOpacity = 0;
-
     stdrsl_ShadingContext m_shadingCtx;
-    stdrsl_Fresnel m_fresnel;
     stdrsl_Hair m_hair;
 
     uniform string m_lightGroups[];
     uniform float m_nLightGroups;
 
-    varying color diffuseColor;
+    varying color diffuseColor; // Mocking the naming convention of parameters.
+    varying color specularColor; // Mocking the naming convention of parameters.
 
     public void construct() {
         m_shadingCtx->construct();
@@ -216,18 +249,18 @@ RSLINJECT_shaderdef
     }
 
     public void begin() {
+
         RSLINJECT_begin
 
-        m_shadingCtx->initHair(0); // 0 -> trust the normals.
+        m_shadingCtx->initHair(0); // 0 -> We don't trust the normals.
 
+        // Fetch the "scalp" surface normal (for various packages).
         normal surfaceN = N;
-
-        // Get the scalp surface normal
-        if (readprimvar("surface_normal", surfaceN)) { // maya fur
+        if (readprimvar("surface_normal", surfaceN)) { // Maya fur
             m_shadingCtx->m_Nn = normalize(surfaceN);
-        } else if (readprimvar("N_srf", surfaceN)) { // shave
+        } else if (readprimvar("N_srf", surfaceN)) { // Shave
             m_shadingCtx->m_Nn = normalize(surfaceN); 
-        } else if (readprimvar("n_surf", surfaceN)) { // yeti
+        } else if (readprimvar("n_surf", surfaceN)) { // Yeti
             m_shadingCtx->m_Nn = normalize(surfaceN);
         }
 
@@ -236,8 +269,19 @@ RSLINJECT_shaderdef
         m_shadingCtx->reinit();
         m_shadingCtx->m_Bitangent = bitangent;
 
-        // m_fresnel->init(m_shadingCtx, mediaIor, ior);
+    }
 
+
+    public void opacity(output color Oi) {
+
+        RSLINJECT_opacity
+
+        if(__computesOpacity != 0) {
+            Oi = mix(rootOpacity, tipOpacity, v);
+        } else { 
+            // This shouldn't get called, but...
+            Oi = Os;
+        }
     }
 
     public void initDiffuse() {
@@ -247,9 +291,9 @@ RSLINJECT_shaderdef
         diffuseColor = mix(diffuseRootColor, diffuseTipColor, v);
 
         m_hair->initDiffuse(m_shadingCtx,
-            diffuseGain, // diffuse gain
-            diffuseReflectGain, // diffuse Reflect gain
-            diffuseTransmitGain, // diffuse transmit gain
+            diffuseGain,
+            diffuseReflectGain,
+            diffuseTransmitGain,
             color(1), // root color
             color(1)  // tip color
         );
@@ -257,12 +301,16 @@ RSLINJECT_shaderdef
 
     public void initSpecular() {
         RSLINJECT_initSpecular
+
+        // We don't apply this until much later.
+        specularColor = mix(specularRootColor, specularTipColor, v);
+
         m_hair->initSpecular(m_shadingCtx, specularSamples,
-            color(specularTransmitGain), // color(m_fresnel->m_Kt), // transmit color
-            specularShift, // shift highlight from root to tip [5, 10]
-            specularWidth, // highlight width [5, 10]
-            specularReflectGain, // iorRefl ??
-            -1 // index (for picking directions)
+            color(specularTransmitGain), // transmitColor
+            specularShift,
+            specularWidth,
+            specularReflectGain,
+            -1 // index for picking directions; -1 -> random
         );
     }
 
@@ -282,7 +330,7 @@ RSLINJECT_shaderdef
         writeaov(format(pattern, "DiffuseShadowMult"), diffuseDirect / unshadowedDiffuseDirect);
         writeaov(format(pattern, "SpecularShadowMult"), specularDirect / unshadowedSpecularDirect);
 
-        if (WriteGPAOVs) {
+        if (writeGPAOVs) {
             writeaov(format(pattern, "DiffuseShadow" ), diffuseColor  * (unshadowedDiffuseDirect  - diffuseDirect )); // Same as GP.
             writeaov(format(pattern, "SpecularShadow"), specularColor * (unshadowedSpecularDirect - specularDirect)); // Same as GP.
         }
