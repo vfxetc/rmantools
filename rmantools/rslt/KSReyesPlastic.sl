@@ -253,9 +253,9 @@ RSLINJECT_shaderdef
         } else {
             directlighting(this, lights,
                 "diffuseresult", diffuseDirect,
-                "specularresult", specularDirect
+                "specularresult", specularDirect,
                 "unshadoweddiffuseresult", unshadowedDiffuseDirect,
-                "unshadowedspecularresult", unshadowedSpecularDirect,
+                "unshadowedspecularresult", unshadowedSpecularDirect
             );
         }
 
