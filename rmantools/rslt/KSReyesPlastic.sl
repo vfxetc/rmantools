@@ -33,6 +33,8 @@ extensions pixar {} {
                 initDiffuse {
                     f:prelighting
                     diffuseSamples
+                    diffuseColor
+                    diffuseGain
                 }
 
                 initSpecular {
@@ -40,13 +42,14 @@ extensions pixar {} {
                     specularRoughness
                     specularAnisotropy
                     specularSamples
+                    specularColor
+                    specularGain
+                    specularOffset
                 }
 
                 lighting {
                     f:initDiffuse
                     f:initSpecular
-                    diffuseColor
-                    specularColor
                     writeGPAOVs
                 }
 
@@ -91,6 +94,31 @@ extensions pixar {} {
                 subtype slider 
                 range {1 2.5 .01}
                 default 1 
+            }
+
+        }
+
+        collection void Gains {
+    
+            parameter float diffuseGain {
+                detail cantvary
+                subtype slider 
+                range {0 1 0.01}
+                default 1.0
+            }
+
+            parameter float specularGain {
+                detail cantvary
+                subtype slider 
+                range {0 2 0.01}
+                default 1.0
+            }
+
+            parameter float specularOffset {
+                detail cantvary
+                subtype slider 
+                range {0 1 0.01}
+                default 0.0
             }
 
         }
@@ -191,7 +219,7 @@ RSLINJECT_shaderdef
 
     public void begin() {
         RSLINJECT_begin
-        m_shadingCtx->init();
+        m_shadingCtx->initWithTangentField(s);
     }
 
     public void displacement(output point P; output normal N)
@@ -210,13 +238,13 @@ RSLINJECT_shaderdef
 
     public void initDiffuse() {
         RSLINJECT_initDiffuse
-        m_diffuse->init(m_shadingCtx, color(m_fresnel->m_Kt), 1, diffuseSamples);
+        m_diffuse->init(m_shadingCtx, color(m_fresnel->m_Kt * diffuseGain), 1, diffuseSamples);
     }
 
     public void initSpecular() {
         RSLINJECT_initSpecular
         m_specular->init(m_shadingCtx,
-            color(m_fresnel->m_Kr), // The fresnel is not automatically used by the spec.
+            color(m_fresnel->m_Kr * specularGain + specularOffset), // The fresnel is not automatically used by the spec.
             specularRoughness,
             specularAnisotropy,
             1, // Roughness scale.
