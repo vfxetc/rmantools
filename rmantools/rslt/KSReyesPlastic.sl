@@ -295,8 +295,10 @@ RSLINJECT_shaderdef
         color diffuseIndirect = indirectdiffuse(P, normalize(N), diffuseSamples);
         color specularIndirect = indirectspecular(this);
 
-        Ci += diffuseColor  * (diffuseDirect  + diffuseIndirect ) \
-            + specularColor * (specularDirect + specularIndirect);
+        Ci = diffuseColor  * (diffuseDirect  + diffuseIndirect ) \
+           + specularColor * (specularDirect + specularIndirect);
+
+        Ci *= Oi;
 
         if (depth == 0) {
 
