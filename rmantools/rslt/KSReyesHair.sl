@@ -314,25 +314,30 @@ RSLINJECT_shaderdef
         );
     }
 
-    void writeAOVs(string pattern; color diffuseDirect, specularDirect,
+    void _writeaov(string name; color value) {
+        extern Oi;
+        writeaov(name, value * Oi);
+    }
+
+    void _writeaovs(string pattern; color diffuseDirect, specularDirect,
         unshadowedDiffuseDirect, unshadowedSpecularDirect, diffuseIndirect
     ) {
 
-        writeaov(format(pattern, "Diffuse"), diffuseColor * (diffuseDirect + diffuseIndirect)); // Same as GP.
-        writeaov(format(pattern, "Specular"), specularColor * specularDirect); // DIRECT ONLY! Same as GP.
+        _writeaov(format(pattern, "Diffuse"), diffuseColor * (diffuseDirect + diffuseIndirect)); // Same as GP.
+        _writeaov(format(pattern, "Specular"), specularColor * specularDirect); // DIRECT ONLY! Same as GP.
 
-        writeaov(format(pattern, "DiffuseDirect"), diffuseDirect);
-        writeaov(format(pattern, "SpecularDirect"), specularDirect);
-        writeaov(format(pattern, "DiffuseDirectNoShadow"), unshadowedDiffuseDirect);
-        writeaov(format(pattern, "SpecularDirectNoShadow"), unshadowedSpecularDirect);
+        _writeaov(format(pattern, "DiffuseDirect"), diffuseDirect);
+        _writeaov(format(pattern, "SpecularDirect"), specularDirect);
+        _writeaov(format(pattern, "DiffuseDirectNoShadow"), unshadowedDiffuseDirect);
+        _writeaov(format(pattern, "SpecularDirectNoShadow"), unshadowedSpecularDirect);
 
         // We find these shadows make a bit more sense.
-        writeaov(format(pattern, "DiffuseShadowMult"), diffuseDirect / unshadowedDiffuseDirect);
-        writeaov(format(pattern, "SpecularShadowMult"), specularDirect / unshadowedSpecularDirect);
+        _writeaov(format(pattern, "DiffuseShadowMult"), diffuseDirect / unshadowedDiffuseDirect);
+        _writeaov(format(pattern, "SpecularShadowMult"), specularDirect / unshadowedSpecularDirect);
 
         if (writeGPAOVs) {
-            writeaov(format(pattern, "DiffuseShadow" ), diffuseColor  * (unshadowedDiffuseDirect  - diffuseDirect )); // Same as GP.
-            writeaov(format(pattern, "SpecularShadow"), specularColor * (unshadowedSpecularDirect - specularDirect)); // Same as GP.
+            _writeaov(format(pattern, "DiffuseShadow" ), diffuseColor  * (unshadowedDiffuseDirect  - diffuseDirect )); // Same as GP.
+            _writeaov(format(pattern, "SpecularShadow"), specularColor * (unshadowedSpecularDirect - specularDirect)); // Same as GP.
         }
 
     }
@@ -401,19 +406,19 @@ RSLINJECT_shaderdef
 
         if (depth == 0) {
 
-            writeAOVs("%s",
+            _writeaovs("%s",
                 diffuseDirect, specularDirect,
                 unshadowedDiffuseDirect, unshadowedSpecularDirect,
                 diffuseIndirect
             );
 
-            writeaov("DiffuseColor", diffuseColor); // Not written by GP.
-            writeaov("DiffuseIndirect", diffuseIndirect); // Not written by GP.
-            writeaov("SpecularIndirect", specularIndirect); // Same as GP.
+            _writeaov("DiffuseColor", diffuseColor); // Not written by GP.
+            _writeaov("DiffuseIndirect", diffuseIndirect); // Not written by GP.
+            _writeaov("SpecularIndirect", specularIndirect); // Same as GP.
 
             uniform float i;
             for (i = 0; i < m_nLightGroups; i += 1) {
-                writeAOVs(concat("Grouped%s_", m_lightGroups[i]),
+                _writeaovs(concat("Grouped%s_", m_lightGroups[i]),
                     groupedDiffuseDirect[i],
                     groupedSpecularDirect[i],
                     groupedUnshadowedDiffuseDirect[i],
