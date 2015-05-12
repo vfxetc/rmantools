@@ -320,7 +320,7 @@ RSLINJECT_shaderdef
     }
 
     void _writeaov(string name; color value) {
-        extern Oi;
+        extern color Oi;
         writeaov(name, value * Oi);
     }
 
