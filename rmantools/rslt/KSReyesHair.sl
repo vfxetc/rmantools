@@ -16,10 +16,6 @@ extensions pixar {} {
         codegenhints {
             shaderobject {
 
-                begin {
-                    inputAOV
-                }
-
                 opacity {
                     rootOpacity
                     tipOpacity
@@ -53,6 +49,10 @@ extensions pixar {} {
                     f:initSpecular
                     lightingSamples
                     writeGPAOVs
+                }
+
+                postlighting {
+                    inputAOV
                 }
 
             }
@@ -284,6 +284,11 @@ RSLINJECT_shaderdef
         }
     }
 
+    public void prelighting(output color Ci, Oi)
+    {
+        RSLINJECT_prelighting
+    }
+
     public void initDiffuse() {
         RSLINJECT_initDiffuse
 
@@ -431,6 +436,11 @@ RSLINJECT_shaderdef
 
     }
 
+
+    public void postlighting(output color Ci, Oi)
+    {
+        RSLINJECT_postlighting
+    }
 
     public void evaluateSamples(string distribution; output __radiancesample samples[]) {
         if (distribution == "diffuse" && diffuseSamples > 0) {

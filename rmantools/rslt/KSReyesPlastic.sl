@@ -16,9 +16,6 @@ extensions pixar {} {
         codegenhints {
             shaderobject {
 
-                begin {
-                    inputAOV
-                }
 
                 displacement {
                     bumpAmount
@@ -57,6 +54,10 @@ extensions pixar {} {
                     f:initDiffuse
                     f:initSpecular
                     writeGPAOVs
+                }
+
+                postlighting {
+                    inputAOV
                 }
 
             }
@@ -437,6 +438,9 @@ RSLINJECT_shaderdef
 
     }
 
+    public void postlighting(output color Ci, Oi) {
+        RSLINJECT_postlighting
+    }
 
     public void evaluateSamples(string distribution; output __radiancesample samples[]) {
         if (distribution == "diffuse" && diffuseSamples > 0) {
