@@ -29,7 +29,9 @@ extensions pixar {} {
                 }
 
                 prelighting {
+                    useClearcoat
                     ior
+                    clearcoatIor
                     mediaIor
                 }
 
@@ -48,6 +50,11 @@ extensions pixar {} {
                     specularColor
                     specularGain
                     specularOffset
+                    clearcoatRoughness
+                    clearcoatAnisotropy
+                    clearcoatSamples
+                    clearcoatGain
+                    clearcoatOffset
                 }
 
                 lighting {
@@ -83,28 +90,28 @@ extensions pixar {} {
                 default 0
             } 
 
-            parameter float ior {
-                label "IOR"
-                description {
-                    Index of Refraction of the surface.
-                }
-                subtype slider
-                range {1 2.5 .01}
-                default 1.5 
-            }
-
-            parameter float mediaIor {
-                label "Media IOR"
-                description {
-                    Index of Refraction of the media that the surface is in (e.g. the air).
-                }
-                subtype slider 
-                range {1 2.5 .01}
-                default 1 
-            }
-
         }
 
+        collection void Clearcoat {
+    
+            parameter float useClearcoat {
+                detail cantvary
+                subtype switch
+                default 0
+            }
+
+            parameter float clearcoatRoughness {
+                default 0.001
+            }
+
+            parameter float clearcoatAnisotropy {
+                subtype slider
+                range {-1 1 .0001}
+                default 0
+            } 
+
+        }
+    
         collection void Opacity {
 
             parameter float __computesOpacity {
@@ -156,6 +163,42 @@ extensions pixar {} {
         }
 
 
+        collection void Physical {
+    
+
+            parameter float ior {
+                label "IOR"
+                description {
+                    Index of Refraction of the surface.
+                }
+                subtype slider
+                range {1 2.5 .01}
+                default 1.5 
+            }
+
+            parameter float clearcoatIor {
+                label "Clearcoat IOR"
+                description {
+                    Index of Refraction of the clearcoat (if there is one).
+                }
+                subtype slider
+                range {1 2.5 .01}
+                default 1.5 
+            }
+
+            parameter float mediaIor {
+                label "Media IOR"
+                description {
+                    Index of Refraction of the media that the surface is in (e.g. the air).
+                }
+                subtype slider 
+                range {1 2.5 .01}
+                default 1 
+            }
+
+        }
+
+
         collection void Gains {
     
             parameter float diffuseGain {
@@ -173,6 +216,20 @@ extensions pixar {} {
             }
 
             parameter float specularOffset {
+                detail cantvary
+                subtype slider 
+                range {0 1 0.01}
+                default 0.0
+            }
+
+            parameter float clearcoatGain {
+                detail cantvary
+                subtype slider 
+                range {0 2 0.01}
+                default 1.0
+            }
+
+            parameter float clearcoatOffset {
                 detail cantvary
                 subtype slider 
                 range {0 1 0.01}
@@ -206,6 +263,13 @@ extensions pixar {} {
             }
 
             parameter float specularSamples {
+                detail cantvary
+                subtype slider 
+                range {1 64 1}
+                default 16
+            }
+
+            parameter float clearcoatSamples {
                 detail cantvary
                 subtype slider 
                 range {1 64 1}
@@ -258,8 +322,10 @@ RSLINJECT_shaderdef
 
     stdrsl_ShadingContext m_shadingCtx;
     stdrsl_Fresnel m_fresnel;
+    stdrsl_Fresnel m_clearcoatFresnel;
     stdrsl_Lambert m_diffuse;
     stdrsl_SpecularAS m_specular;
+    stdrsl_SpecularAS m_clearcoat;
 
     uniform string m_lightGroups[];
     uniform float m_nLightGroups;
@@ -311,6 +377,9 @@ RSLINJECT_shaderdef
     public void prelighting(output color Ci, Oi) {
         RSLINJECT_prelighting
         m_fresnel->init(m_shadingCtx, mediaIor, ior);
+        if (useClearcoat != 0) {
+            m_clearcoatFresnel->init(m_shadingCtx, mediaIor, clearcoatIor);
+        }
     }
 
     public void initDiffuse() {
@@ -328,6 +397,16 @@ RSLINJECT_shaderdef
             1, // Minimum samples.
             specularSamples // Maximum samples.
         );
+        if (useClearcoat != 0) {
+            m_clearcoat->init(m_shadingCtx,
+                color(m_clearcoatFresnel->m_Kr * clearcoatGain + clearcoatOffset), // The fresnel is not automatically used by the spec.
+                clearcoatRoughness,
+                clearcoatAnisotropy,
+                1, // Roughness scale.
+                1, // Minimum samples.
+                clearcoatSamples // Maximum samples.
+            );
+        }
     }
 
     void _writeaov(string name; color value) {
@@ -448,12 +527,24 @@ RSLINJECT_shaderdef
         }
         if (distribution != "diffuse" && specularSamples > 0) {
             m_specular->evalSpecularSamps(m_shadingCtx, m_fresnel, samples);
+            if (useClearcoat != 0) {
+                accumulateMaterialResponse(samples);
+                m_clearcoat->evalSpecularSamps(m_shadingCtx, m_clearcoatFresnel, samples);
+                accumulateMaterialResponse(samples);
+            }
         }
     }
 
     public void generateSamples(string distribution; output __radiancesample samples[]) {
         if (distribution != "diffuse" && specularSamples > 0) {
             m_specular->genSpecularSamps(m_shadingCtx, m_fresnel, distribution, samples);
+            if (useClearcoat != 0) {
+                uniform float n1 = arraylength(samples);
+                m_clearcoat->genSpecularSamps(m_shadingCtx, m_clearcoatFresnel, distribution, samples);
+                uniform float n2 = arraylength(samples) - n1;
+                uniform float sampleCounts[2] = {n1, n2};
+                normalizeMaterialResponse(samples, sampleCounts);
+            }
         }
     }
 }
