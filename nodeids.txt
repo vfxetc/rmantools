@@ -4,8 +4,9 @@ $ grep -r nodeid
 ./rmantools/pattern/KSRisSides.args:           <rfmdata nodeid="20000001" classification="rendernode/RenderMan/pattern"/>
 ./rmantools/pattern/KSExampleRisOSL.args:      <rfmdata nodeid="20000002" classification="rendernode/RenderMan/pattern"/>
 
-./rmantools/rslt/KSExampleReyesRoot.sl:               rfm_nodeid 2000011
-./rmantools/rslt/KSExampleReyesNode.h:                rfm_nodeid 2000012
+./rmantools/rslt/KSExampleReyesRoot.sl:               rfm_nodeid 2000001
+./rmantools/rslt/KSExampleReyesNode.h:                rfm_nodeid 2000002
+./rmantools/rslt/KSExampleCoshaderNode.h:             rfm_nodeid 2000003
 
 ./rmantools/rslt/KSReyesHairMapping.h:                rfm_nodeid 2000013
 ./rmantools/rslt/KSReyesAOV.h:                        rfm_nodeid 2000014

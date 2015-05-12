@@ -19,7 +19,7 @@ extensions pixar {} {
         #     - rendernode/RenderMan/utility: Does nothing special AFAICT.
         #     - swatch/rmanSwatch: Use RenderMan to create the swatch (maybe?)
         userdata {
-            rfm_nodeid 2000012
+            rfm_nodeid 2000002
             rfm_classification rendernode/RenderMan/utility
         }
 
@@ -43,8 +43,10 @@ extensions pixar {} {
 
 
 
-void KSExampleReyesNode(point location; output color resultColor;)
-{
+void KSExampleReyesNode(
+    point location;
+    output color resultColor;
+) {
     resultColor = noise(location);
 }
 

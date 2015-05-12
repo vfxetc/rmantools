@@ -8,7 +8,7 @@ extensions pixar {} {
     template void KSExampleReyesRoot {
 
         userdata {
-            rfm_nodeid 2000011
+            rfm_nodeid 2000001
             rfm_classification \
                 shader/surface:rendernode/RenderMan/shader/surface:swatch/rmanSwatch
         }
