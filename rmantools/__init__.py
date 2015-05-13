@@ -1,10 +1,12 @@
 import os
 
 
-def get_envvars():
+def get_envvars(realpath=False):
 
     rmantools = os.path.dirname(os.path.abspath(__file__))
-
+    if realpath:
+        rmantools = os.path.realpath(rmantools)
+    
     return {
 
         # Pull in the config.
