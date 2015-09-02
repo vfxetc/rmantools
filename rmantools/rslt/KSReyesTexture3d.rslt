@@ -1,0 +1,526 @@
+# This file is a deriviative of one from the RenderManProServer-19.0
+# distribution, specifically: $RMSTREE/lib/rfm/rsl/customNodes/rfmTexture3d.rslt
+#
+# We have made modifications such that it does not use an implicit rfmManifold3d,
+# but instead may pull P from an arbitrary primative variable (e.g. `__Pref`).
+#
+# The original copyright notice follows.
+#
+## Copyright (c) 2006 PIXAR.  All rights reserved.  This program or
+## documentation contains proprietary confidential information and trade
+## secrets of PIXAR.  Reverse engineering of object code is prohibited.
+## Use of copyright notice is precautionary and does not imply
+## publication.
+##
+##                      RESTRICTED RIGHTS NOTICE
+##
+## Use, duplication, or disclosure by the Government is subject to the
+## following restrictions:  For civilian agencies, subparagraphs (a) through
+## (d) of the Commercial Computer Software--Restricted Rights clause at
+## 52.227-19 of the FAR; and, for units of the Department of Defense, DoD
+## Supplement to the FAR, clause 52.227-7013 (c)(1)(ii), Rights in
+## Technical Data and Computer Software.
+##
+## Pixar
+## 1200 Park Ave
+## Emerville, CA  94608
+##
+## ----------------------------------------------------------------------------
+
+
+slim 1 extensions pixar_db {
+    extensions pixar {} {
+
+        set ::ks_sharedTexture3dParameters {
+
+            parameter string prefPrimVar {
+            	label "Pref Primvar"
+            	detail cantvary
+                provider parameterlist
+            }
+
+            parameter float\[16\] placementMatrix {
+                userdata {
+                    rfm_shortname pm
+                }
+                detail cantvary
+                provider parameterlist
+                subtype matrix
+                display hidden
+            }
+            parameter float filter {
+                userdata {
+                    rfm_shortname f
+                }
+                default 1
+            }
+            parameter float filterOffset {
+                userdata {
+                    rfm_shortname fo
+                }
+                default 0
+            }
+            parameter float blend {
+                userdata {
+                    rfm_shortname b
+                }
+                default 0
+            }
+            parameter float local {
+                userdata {
+                 rfm_shortname lo
+                }
+                detail cantvary
+                default 0
+                subtype switch
+            }
+            parameter float wrap {
+                userdata {
+                 rfm_shortname w
+                }
+                detail cantvary
+                default 1
+                subtype switch
+            }
+            parameter float invert {
+                userdata {
+                 rfm_shortname i
+                }
+                detail cantvary
+                default 0
+                subtype switch
+            }
+            parameter float alphaIsLuminance {
+                userdata {
+                 rfm_shortname ail
+                }
+                detail cantvary
+                default 0
+                subtype switch
+            }
+            parameter color colorGain {
+                userdata {
+                 rfm_shortname cg
+                }
+                default {1 1 1}
+            }
+            parameter color colorOffset {
+                userdata {
+                 rfm_shortname co
+                }
+                default {0 0 0}
+            }
+            parameter float alphaGain {
+                userdata {
+                 rfm_shortname ag
+                }
+                default 1
+            }
+            parameter float alphaOffset {
+                userdata {
+                 rfm_shortname ao
+                }
+                default 0
+            }
+            parameter color defaultColor {
+                userdata {
+                 rfm_shortname dc
+                }
+                default {.5 .5 .5}
+            }
+            parameter "output color" outColor {
+                detail mustvary
+                userdata {
+                 rfm_shortname oc
+                }
+                default {0 0 0}
+            }
+            parameter "output float" outAlpha {
+                userdata {
+                 rfm_shortname oa
+                }
+                detail mustvary
+                default 0
+            }
+            RSLPlugin RfMShadeops
+        }
+
+        set ::ks_sharedTexture3dFormals {
+        	uniform string prefPrimVar;
+            uniform float placementMatrix[16];
+            float filter;
+            float filterOffset;
+            float blend;
+            uniform float local;
+            uniform float wrap;
+            uniform float invert;
+            float alphaIsLuminance;
+            color colorGain;
+            color colorOffset;
+            float alphaGain;
+            float alphaOffset;
+            color defaultColor;
+            output color outColor;
+            output float outAlpha;
+        }
+
+        set ::ks_sharedTexture3dPrologue {
+
+            // Adapted from rfmManifold.rslt.
+            extern point Ps;
+            point Q;
+            if (prefPrimVar != "") {
+                readprimvar(prefPrimVar, Q);
+            } else {
+                Q = Ps;
+            }
+            vector dQu = vector Du(Q)*du;
+            vector dQv = vector Dv(Q)*dv;
+
+
+            float outside;
+            point QQ;
+            vector dQQu, dQQv;
+            uniform matrix m;
+            if( local != 0 )
+            {
+                m = matrix "shader" (1) * matrix(placementMatrix);
+            }
+            else
+            {
+                m = matrix "world" (1) * matrix(placementMatrix);
+            }
+            #pragma nolint
+            QQ = transform(m, Q);
+            dQQu = vtransform(m, dQu);
+            dQQv = vtransform(m, dQv);
+            if( 0 == wrap )
+                outside = _rfm_checkOutside3d(QQ);
+            else
+                outside = 0;
+            if( outside == 1 )
+            {
+                outColor = defaultColor;
+            }
+        }
+
+        set ::ks_sharedTexture3dEpilogue {
+            if( invert != 0 )
+            {
+                outColor = color(1) - outColor;
+            }
+            outAlpha = _rfm_luminance(outColor);
+            outColor = outColor * colorGain + colorOffset;
+            outAlpha = outAlpha * alphaGain + alphaOffset;
+            if (blend != 0)
+            {
+                outColor = mix(outColor, defaultColor, blend);
+                outAlpha *= (1 - blend);
+            }
+        }
+
+
+        templateV void KSReyesCellNoise 0 {
+            userdata {
+                rfm_nodeid 2000080
+                rfm_classification rendernode/RenderMan/texture/3d
+            }
+            parameter float Time {
+                default 0
+            }
+            eval $::ks_sharedTexture3dParameters
+            RSLFunction "
+                void KSReyesCellNoise(
+                    float tt;
+                    $::ks_sharedTexture3dFormals
+                )
+                {
+                    $::ks_sharedTexture3dPrologue
+                    if(outside < 1)
+                    {
+                        outColor = cellnoise(QQ, tt);
+                    }
+                    $::ks_sharedTexture3dEpilogue
+                }
+            "
+        }
+
+
+        templateV void KSReyesWaveletNoise3d 0 {
+            userdata {
+                rfm_nodeid 2000081
+                rfm_classification rendernode/RenderMan/texture/3d
+            }
+            parameter string frequencyrange {
+                subtype selector
+                range {
+                    finite finite
+                    infinite infinite
+                }
+                description {
+                    Controls whether noise spectrum is finite and based 
+                    on the point (the default), or infinite and always 
+                    consists of visible frequencies.
+                }
+                default finite
+            }
+            parameter float octaves  {
+                detail cantvary
+                default 1
+            }
+            parameter float lacunarity  {
+                detail cantvary
+                default 1
+                description {
+                  Specifies a multiplier for each successive frequency of noise.
+                }
+            }
+            parameter float\[10\] weights {
+                default {1 .5 .25 .125 .0625 .03125 .015625 .0078125 .00390625 .001953125}
+                description {
+                    An array of floats representing weights for each frequency.
+                    Their effect will automatically be normalized. Ideally the 
+                    length of the array matches the number of octaves. If the 
+                    array is longer, only the relevant entries will be used. 
+                    If the array is shorter or absent, the missing values 
+                    will be set to 1.
+                }
+#                subtype slider
+#                range {0 1 .0000000001}
+            }
+            parameter string distribution {
+                subtype selector
+                range {
+                    flat flat
+                    gaussian gaussian
+                }
+                description {
+                    Controls the manner in which values are distributed around 
+                    the center. By default, this is a flat (uniform) 
+                    distribution.  
+                }
+                default flat
+            }
+            parameter float amplitude {
+                default 1
+                subtype slider
+                range {0 1000 .01}
+                description {
+                    Controls the amplitude of distribution about the center
+                    value. With a flat distribution, output values range
+                    from -amplitude to +amplitude. With a gaussian 
+                    distribution, amplitude represents the standard deviation.
+                    In this case, a small percentage of values will exceed
+                    the bounds set by amplitude.
+                }
+            }
+            eval $::ks_sharedTexture3dParameters
+            RSLFunction "
+                void KSReyesWaveletNoise3d(
+                    string frange;
+                    float octaves;
+                    float lacunarity;
+                    float weights\[\];
+                    string distr;
+                    float amp;
+                    $::ks_sharedTexture3dFormals
+                )
+                {
+                    $::ks_sharedTexture3dPrologue
+                    float fw = max(sqrt(area(QQ)), 2e-6);
+                    if(outside < 1)
+                    {
+                        outColor = float wnoise(QQ, fw, 
+                                        \"frequencyrange\", frange, 
+                                        \"octaves\", octaves,
+                                        \"lacunarity\", lacunarity,
+                                        \"weights\", weights,
+                                        \"distribution\", distr,
+                                        \"amplitude\", amp);
+                    }
+                    $::ks_sharedTexture3dEpilogue
+                }
+            "
+        }
+
+
+
+        templateV void KSReyesWorleyTexture 0 {
+            description "A Cellular Texture Basis Function."
+            userdata {
+                rfm_nodeid 2000082
+                rfm_classification rendernode/RenderMan/texture/3d
+            }
+            parameter float frequency {
+                description "Controls the size of the cells. Higher
+                frequencies make smaller cells."
+                default 4
+                subtype slider
+                range {.1 100 .1}
+            }
+            parameter string distancemetric {
+                description "The means to measure distances to
+                neighboring cells.  Manhattan distance gives
+                more rectangular shapes and Euclidian distance
+                gives more spherical shapes."
+                default "Euclidian"
+                subtype selector
+                range { "Euclidian" "Euclidian" "Manhattan" "Manhattan" }
+            }
+            parameter float jitter {
+                description "Controls the distortion of the cells."
+                default .75
+                subtype slider
+                range {0 1 .01}
+            }
+            parameter float clamp {
+                description "Causes resulting distances to be clamped
+                to the range 0->1"
+                default 1
+                subtype switch
+            }
+            parameter float c1 {
+                description "Multiplier for the distances to the first
+                feature."
+                default .8
+                subtype slider
+                range {-2 2 .01}
+            }
+            parameter float c2 {
+                description "Multiplier for the distance to the second
+                feature."
+                default -.2
+                subtype slider
+                range {-2 2 .01}
+            }
+            eval $::ks_sharedTexture3dParameters
+            RSLFunction "
+                void
+                KSReyesWorleyTexture(
+                    float frequency;
+                    uniform string distancemetric;
+                    float jitter;
+                    uniform float clamp;
+                    float c1, c2;
+                    $::ks_sharedTexture3dFormals
+                )
+                {
+                    $::ks_sharedTexture3dPrologue
+                    if(outside < 1)
+                    {
+                        float f1, f2;
+                        point pp = frequency * QQ;
+                        point thiscell = point (floor(xcomp(pp))+0.5,
+                                                floor(ycomp(pp))+0.5,
+                                                floor(zcomp(pp))+0.5);
+                        f1 = f2 = 1000;
+                        uniform float i, j, k;
+                        for (i = -1;  i <= 1;  i += 1) {
+                            for (j = -1;  j <= 1;  j += 1) {
+                                for (k = -1;  k <= 1;  k += 1) {
+                                    point testcell = thiscell + vector(i,j,k);
+                                    point pos = testcell + jitter *
+                                        (vector cellnoise (testcell) - 0.5);
+                                    vector offset = pos - pp;
+                                    float dist;
+                                    if (distancemetric == \"Euclidian\")
+                                        dist = offset.offset;
+                                    else
+                                    {
+                                        dist =  abs(xcomp(offset)) +
+                                                abs(ycomp(offset)) +
+                                                abs(zcomp(offset));
+                                    }
+                                    if (dist < f1) {
+                                        f2 = f1;
+                                        f1 = dist;
+                                    } else if (dist < f2) {
+                                        f2 = dist;
+                                    }
+                                }
+                            }
+                        }
+                        if (distancemetric == \"Euclidian\")
+                        {
+                            f1 = sqrt(f1);
+                            f2 = sqrt(f2);
+                        }
+                        float g = f1 * c1 + f2 * c2;
+                        if (clamp != 0)
+                        {
+                            g = clamp(g, 0, 1);
+                        }
+                        outColor = color g;
+                    }
+                    $::ks_sharedTexture3dEpilogue
+                }
+            "
+        }
+
+
+
+        templateV void KSReyesTexture3d 0 {
+            userdata {
+                rfm_nodeid 2000083
+                rfm_classification rendernode/RenderMan/texture/3d
+            }
+            parameter string File {
+                default ""
+                subtype file
+                provider parameterlist
+            }
+            parameter string Channel {
+                default ""
+                provider parameterlist
+            }
+            parameter string CoordinateSystem {
+                default "shader"
+                provider parameterlist
+            }
+            parameter float FilterScale {
+                default 1;
+                detail cantvary
+            }
+            parameter float MaxDepth {
+                default 20
+                detail cantvary
+            }
+            parameter float Lerp {
+                default 0
+                detail cantvary
+                subtype switch
+            }
+            eval $::ks_sharedTexture3dParameters
+            parameter normal n {
+                display invisible
+                detail mustvary
+                defaultconnection geomNormal.out_N; # geomNormal is built-in
+            }
+            RSLFunction "
+                void KSReyesTexture3d(
+                    string file;
+                    string channelname;
+                    string coordsys;
+                    float filterscale;
+                    uniform float maxdepth;
+                    uniform float lerp;
+                    $::ks_sharedTexture3dFormals
+                    normal Ns;
+                )
+                {
+                    $::ks_sharedTexture3dPrologue
+                    if(outside < 1)
+                    {
+                        texture3d(file, QQ, Ns,
+                                \"coordsystem\", coordsys,
+                                \"filterscale\", filterscale,
+                                \"maxdepth\", maxdepth,
+                                \"lerp\", lerp,
+                                channelname, outColor);
+                    }
+                    $::ks_sharedTexture3dEpilogue
+                }
+            "
+        }
+    }
+}

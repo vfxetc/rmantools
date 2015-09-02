@@ -2,8 +2,9 @@
 recursive-include rmantools *.args
 
 # RSLT.
-recursive-include rmantools *.sl
 recursive-include rmantools *.h
+recursive-include rmantools *.rslt
+recursive-include rmantools *.sl
 
 # Open Shading Language.
 recursive-include rmantools *.osl
