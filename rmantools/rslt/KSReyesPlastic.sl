@@ -20,6 +20,7 @@ extensions pixar {} {
                 displacement {
                     bumpAmount
                     bumpScale
+                    bumpDisplace
                 }
 
                 opacity {
@@ -251,6 +252,12 @@ extensions pixar {} {
                 default 1
             }
 
+            parameter float bumpDisplace {
+                detail cantvary
+                subtype switch
+                default 0
+            }
+
         }
 
         collection void Details {
@@ -345,7 +352,11 @@ RSLINJECT_shaderdef
     {
         RSLINJECT_displacement
         if (bumpAmount != 0 && bumpScale != 0) {
-            m_shadingCtx->displace(m_shadingCtx->m_Ns, bumpAmount * bumpScale, "bump");
+            if (bumpDisplace > 0) {
+                m_shadingCtx->displace(m_shadingCtx->m_Ns, bumpAmount * bumpScale, "");
+            } else {
+                m_shadingCtx->displace(m_shadingCtx->m_Ns, bumpAmount * bumpScale, "bump");
+            }
             m_shadingCtx->reinit();
         }
     }
