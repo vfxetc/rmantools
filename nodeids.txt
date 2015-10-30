@@ -11,6 +11,7 @@ $ grep -r nodeid
 ./rmantools/rslt/KSReyesHairMapping.h:                rfm_nodeid 2000013
 ./rmantools/rslt/KSReyesAOV.h:                        rfm_nodeid 2000014
 ./rmantools/rslt/KSReyesSides.h:                      rfm_nodeid 2000015
+./rmantools/rslt/KSReyesHairFade.h:                      rfm_nodeid 2000016
 
 ./rmantools/rslt/KSReyesPlastic.sl:                   rfm_nodeid 2000021
 ./rmantools/rslt/KSReyesHair.sl:                      rfm_nodeid 2000022
