@@ -42,6 +42,18 @@ extensions pixar {} {
             default 1
         }
 
+        parameter float noiseAmount {
+            subtype slider
+            range {0 1 .0001}
+            default 0.2
+        }
+
+        parameter float noiseFreq {
+            subtype slider
+            range {0 10 .0001}
+            default 1
+        }
+        
         parameter float assumeIsShave {
             detail cantvary
             subtype switch
@@ -73,14 +85,18 @@ void KSReyesHairFade(
     float rootFade;
     float tipFade;
     float bias;
+    float noiseAmount;
+    float noiseFreq;
     float assumeIsShave;
     output color resultColor;
 ) {
     float shaveAmbDiff; // Just for the signal.
     float isShave = assumeIsShave != 0 ? 1 : readprimvar("SHAVEambdiff", shaveAmbDiff);
     if (isShave != 0) {
+        float noiseV = noiseAmount * noise(s * noiseFreq, t * noiseFreq);
         float blend = pow(v, bias);
         float fade = mix(rootFade, tipFade, blend);
+        fade = clamp(fade + noiseV, 0, 1);
         resultColor = mix(inputColor, fadeColor, fade);
     } else {
         resultColor = inputColor;
