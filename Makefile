@@ -29,7 +29,8 @@ build: patterns shaders
 
 patterns: $(PATTERNS)
 
-shaders: $(OSL_SHADERS)
+# Used to have $(OSL_SHADERS) here, but oslc has gone missing.
+shaders: 
 
 %.o: %.cpp
 	$(CXX) -c $(CXXFLAGS) $^ -o $@
