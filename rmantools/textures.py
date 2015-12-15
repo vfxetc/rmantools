@@ -1,4 +1,8 @@
-import subprocess
+from subprocess import Popen, PIPE
+
+
+class TxmakeError(EnvironmentError):
+    pass
 
 
 def txmake(src, dst=None, wrap='periodic', newer=True, resize='up', resize_square=True):
@@ -19,6 +23,18 @@ def txmake(src, dst=None, wrap='periodic', newer=True, resize='up', resize_squar
         args.append('-newer')
     args.extend((src, dst))
 
-    subprocess.check_call(args)
+    proc = Popen(args, stdin=PIPE, stdout=PIPE, stderr=PIPE)
+    out, err = proc.communicate()
+
+    out = out.strip()
+    if out:
+        print out
+
+    err = err.strip()
+    if proc.returncode:
+        raise TxmakeError(proc.returncode, err)
+    elif err:
+        print err
+    
     return dst
 
