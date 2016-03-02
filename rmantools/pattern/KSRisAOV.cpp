@@ -109,7 +109,7 @@ KSRisAOV::CreateInstanceData(RixContext &ctx,
                                InstanceData *idata)
 {
 
-    RtInt dataSize = sizeof(MyData*);
+    RtInt dataSize = sizeof(MyData);
     MyData *data = (MyData*)malloc(dataSize);
 
     data->inited = false;
