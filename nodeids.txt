@@ -1,7 +1,6 @@
 $ grep -r nodeid
 
 ./rmantools/pattern/KSRisAOV.args:             <rfmdata nodeid="20000000" classification="rendernode/RenderMan/pattern"/>
-./rmantools/pattern/KSRisAOVMulti.args:        <rfmdata nodeid="20000003" classification="rendernode/RenderMan/pattern"/>
 ./rmantools/pattern/KSRisSides.args:           <rfmdata nodeid="20000001" classification="rendernode/RenderMan/pattern"/>
 ./rmantools/pattern/KSExampleRisOSL.args:      <rfmdata nodeid="20000002" classification="rendernode/RenderMan/pattern"/>
 

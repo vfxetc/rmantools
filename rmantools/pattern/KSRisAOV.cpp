@@ -7,20 +7,26 @@
 #include <stdio.h>
 
 
+#define DEBUG(x, ...) // printf("[KSRisAOV] " x "\n", ##__VA_ARGS__); fflush(stdout);
+
+
 class KSRisAOV : public RixPattern
 {
 public:
 
-    KSRisAOV();
-    virtual ~KSRisAOV();
-
-    virtual int Init(RixContext &, char const *pluginpath);
+    // Stubs.
+    KSRisAOV() {}
+    virtual ~KSRisAOV() {}
+    virtual int Init(RixContext &, char const *pluginpath) { return 0; }
+    virtual void Finalize(RixContext &) {}
+    
     virtual RixSCParamInfo const *GetParamTable();
-    virtual void Finalize(RixContext &);
+    
     virtual int CreateInstanceData(RixContext &ctx,
                                    char const *handle,
                                    RixParameterList const *plist,
                                    InstanceData *idata);
+    
     virtual int ComputeOutputParams(RixShadingContext const *,
                                     RtInt *n, RixPattern::OutputSpec **outputs,
                                     RtConstPointer instanceData,
@@ -29,38 +35,25 @@ public:
 };
 
 
-KSRisAOV::KSRisAOV()
-{
-}
 
-
-KSRisAOV::~KSRisAOV()
-{
-}
-
-
-int
-KSRisAOV::Init(RixContext &ctx, char const *pluginpath)
-{
-    return 0;
-}
-
-
+// NOTE: This MUST match the order of parameters returned from GetParamTable().
 enum paramId
 {
-    k_resultColor = 0,
-    k_resultFloat,
-    k_resultPassColor,
-    k_resultPassFloat,
-    k_resultAOV,
-
-    k_inputColor,
-    k_colorName,
-    k_inputFloat,
-    k_floatName,
-    k_inputPassColor,
-    k_inputPassFloat,
+    // Passthroughs / triggers.
     k_inputAOV,
+    k_resultAOV,
+    k_inputPassColor,
+    k_resultPassColor,
+    k_inputPassFloat,
+    k_resultPassFloat,
+
+    // Results for first float and color (mostly for b/c).
+    k_resultFloat,
+    k_resultColor,
+    
+    // Offsets for dynamic creation.
+    k_nameOffset,
+    k_inputOffset,
 };
 
 
@@ -69,37 +62,68 @@ KSRisAOV::GetParamTable()
 {
     static RixSCParamInfo s_ptable[] =
     {
-        RixSCParamInfo("resultColor"    , k_RixSCColor, k_RixSCOutput),
-        RixSCParamInfo("resultFloat"    , k_RixSCFloat, k_RixSCOutput),
-        RixSCParamInfo("resultPassColor", k_RixSCColor, k_RixSCOutput),
-        RixSCParamInfo("resultPassFloat", k_RixSCFloat, k_RixSCOutput),
-        RixSCParamInfo("resultAOV"      , k_RixSCInteger, k_RixSCOutput),
-
-        RixSCParamInfo("inputColor"    , k_RixSCColor),
-        RixSCParamInfo("colorName"     , k_RixSCString),
-        RixSCParamInfo("inputFloat"    , k_RixSCFloat),
-        RixSCParamInfo("floatName"     , k_RixSCString),
-        RixSCParamInfo("inputPassColor", k_RixSCColor),
+        // Passthroughs / triggers.
+        RixSCParamInfo("inputAOV", k_RixSCInteger),
+        RixSCParamInfo("resultAOV", k_RixSCInteger, k_RixSCOutput),
         RixSCParamInfo("inputPassFloat", k_RixSCFloat),
-        RixSCParamInfo("inputAOV"      , k_RixSCInteger),
+        RixSCParamInfo("resultPassFloat", k_RixSCFloat, k_RixSCOutput),
+        
+        RixSCParamInfo("inputPassColor", k_RixSCColor),
+        RixSCParamInfo("resultPassColor", k_RixSCColor, k_RixSCOutput),
+        RixSCParamInfo("resultFloat", k_RixSCFloat, k_RixSCOutput),
+        RixSCParamInfo("resultColor", k_RixSCColor, k_RixSCOutput),
+        
+        // The names are a little awkward here for maintain b/c.
+        #define PARAM_INFO(index, lower, upper) \
+            RixSCParamInfo(#lower  "Name" #index , k_RixSCString), \
+            RixSCParamInfo("input" #upper #index , k_RixSC##upper),
+        PARAM_INFO(, float, Float) // Single float channel.
+        
+        #define COLOR_PARAM_INFO(index) PARAM_INFO(index, color, Color)
+        COLOR_PARAM_INFO() // Original color channel.
+        COLOR_PARAM_INFO(1)
+        COLOR_PARAM_INFO(2)
+        COLOR_PARAM_INFO(3)
+        COLOR_PARAM_INFO(4)
+        COLOR_PARAM_INFO(5)
+        COLOR_PARAM_INFO(6)
+        COLOR_PARAM_INFO(7)
+        COLOR_PARAM_INFO(8)
+        COLOR_PARAM_INFO(9)
 
-        RixSCParamInfo(), // end of table
+        RixSCParamInfo(), // End of table.
     };
     return &s_ptable[0];
 }
 
-
-void
-KSRisAOV::Finalize(RixContext &ctx)
-{
-}
+#define NUM_MAPPINGS 11
+struct ChannelMapping {
+    char const *name; // Mainly for debugging.
+    int nameParam;
+    int inputParam;
+    int resultParam;
+    int type;
+} mappings[] = {
+    {"float" , k_nameOffset    , k_inputOffset    , k_resultFloat, k_RixSCFloat},
+    {"color0", k_nameOffset + 2, k_inputOffset + 2, k_resultColor, k_RixSCColor},
+    #define COLOR_MAPPING(i) \
+        {"color" #i, k_nameOffset + 2 * (i + 1), k_inputOffset + 2 * (i + 1), -1, k_RixSCColor}
+    COLOR_MAPPING(1),
+    COLOR_MAPPING(2),
+    COLOR_MAPPING(3),
+    COLOR_MAPPING(4),
+    COLOR_MAPPING(5),
+    COLOR_MAPPING(6),
+    COLOR_MAPPING(7),
+    COLOR_MAPPING(8),
+    COLOR_MAPPING(9)
+};
 
 
 struct MyData {
 public:
-    bool inited;
-    RtInt colorDisplay;
-    RtInt floatDisplay;
+    int displayCount;
+    int displays[NUM_MAPPINGS];
 };
 
 int
@@ -111,12 +135,57 @@ KSRisAOV::CreateInstanceData(RixContext &ctx,
 
     RtInt dataSize = sizeof(MyData);
     MyData *data = (MyData*)malloc(dataSize);
-
-    data->inited = false;
-
     idata->data = data;
     idata->datalen = dataSize;
     idata->freefunc = free;
+    
+    // Get the displays.
+    RixRenderState *renderState;
+    renderState = (RixRenderState *)ctx.GetRixInterface(k_RixRenderState);
+    RixRenderState::FrameInfo frameInfo;
+    renderState->GetFrameInfo(&frameInfo);
+    RixIntegratorEnvironment *integratorEnv;
+    integratorEnv = (RixIntegratorEnvironment*)frameInfo.integratorEnv;
+    RtInt numDisplays = integratorEnv->numDisplays;
+    RixDisplayChannel const* displayChannels = integratorEnv->displays;
+    
+    data->displayCount = 0;
+
+    // Match them up to what was requested.
+    for (int i = 0; i < NUM_MAPPINGS; i++) {
+        
+        // Signal that we haven't found it.
+        data->displays[i] = -1;
+        
+        // Grab the requested AOV name.
+        RtConstString name = NULL;
+        plist->EvalParam(mappings[i].nameParam, 0, &name);
+        if (!name || !strlen(name)) {
+            continue;
+        }
+        
+        DEBUG("%s = \"%s\"", mappings[i].name, name);
+        
+        RixSCType shadingType;
+        RixSCConnectionInfo connInfo;
+        plist->GetParamInfo(mappings[i].inputParam, &shadingType, &connInfo);
+        if (connInfo == k_RixSCDefaultValue) {
+            DEBUG("    nothing connected to input; skipping");
+            continue;
+        }
+        
+        // Find a matching display.
+        for (int j = 0; j < numDisplays; j++) {
+            if (!strcmp(displayChannels[j].channel, name)) {
+                DEBUG("    display[%d] -> %d", j, displayChannels[j].id);
+                data->displays[i] = displayChannels[j].id;
+                data->displayCount++;
+                break;
+            }
+        }
+    
+    }
+    
     
     return 0;
 }
@@ -131,133 +200,83 @@ KSRisAOV::ComputeOutputParams(RixShadingContext const *sctx,
     if (!(sctx->scTraits.primaryHit && sctx->scTraits.eyePath)) {
         return 1;
     }
-
-    RtConstString *colorName, *floatName;
-
-    RtInt colorDisplay = -1;
-    RtInt floatDisplay = -1;
-
-    MyData *data = (MyData*)instanceData;
-    if (data->inited) {
-
-        colorDisplay = data->colorDisplay;
-        floatDisplay = data->floatDisplay;
-
-    } else {
-
-        // Get the names.
-        sctx->EvalParam(k_colorName, -1, &colorName, NULL, false);
-        if (colorName && !strlen(*colorName)) {
-            colorName = NULL;
-        }
-        sctx->EvalParam(k_floatName, -1, &floatName, NULL, false);
-        if (floatName && !strlen(*floatName)) {
-            floatName = NULL;
-        }
-
-        // Get the displays.
-        // TODO: Get this into CreateInstanceData.
-        RixRenderState *renderState;
-        renderState = (RixRenderState *)sctx->GetRixInterface(k_RixRenderState);
-        RixRenderState::FrameInfo frameInfo;
-        renderState->GetFrameInfo(&frameInfo);
-        RixIntegratorEnvironment *integratorEnv;
-        integratorEnv = (RixIntegratorEnvironment*)frameInfo.integratorEnv;
-        RtInt numDisplays = integratorEnv->numDisplays;
-        RixDisplayChannel const* displayChannels = integratorEnv->displays;
-
-        // Figure out which displays we are writing to.
-        if (colorName || floatName) {
-            for (unsigned int i = 0; i < numDisplays; i++) {
-                if (colorName && !strcmp(displayChannels[i].channel, *colorName)) {
-                    colorDisplay = displayChannels[i].id;
-                    if (!floatName || floatDisplay >= 0) {
-                        break;
-                    }
-                }
-                if (floatName && !strcmp(displayChannels[i].channel, *floatName)) {
-                    floatDisplay = displayChannels[i].id;
-                    if (!colorName || colorDisplay >= 0) {
-                        break;
-                    }
-                }
-            }
-        }
-
-        data->colorDisplay = colorDisplay;
-        data->floatDisplay = floatDisplay;
-        data->inited = true;
-
-    }
-
-    // Get inputs.
-    RtColorRGB defaultColor; // Just something for it pull from without complaining.
-    RtFloat defaultFloat;
-    RtColorRGB const *inputColor, *inputPassColor;
-    RtFloat const *inputFloat, *inputPassFloat;
-    bool hasInputColor     = sctx->EvalParam(k_inputColor, -1, &inputColor, &defaultColor, true);
-    bool hasInputPassColor = sctx->EvalParam(k_inputPassColor, -1, &inputPassColor, &defaultColor, true);
-    bool hasInputFloat     = sctx->EvalParam(k_inputFloat, -1, &inputFloat, &defaultFloat, true);
-    bool hasInputPassFloat = sctx->EvalParam(k_inputPassFloat, -1, &inputPassFloat, &defaultFloat, true);
-
-    // Pull on the inputAOV plug to make others evaluate.
-    RtInt const *inputAOV;
-    sctx->EvalParam(k_inputAOV, -1, &inputAOV);
-
-
+    
+    MyData const *data = (MyData*)instanceData;
+    
     RixShadingContext::Allocator pool(sctx);
-
     OutputSpec* out = pool.AllocForPattern<OutputSpec>(5); // I'm lazy.
     *outputs = out;
-    *noutputs = 1 + hasInputColor + hasInputPassColor + hasInputFloat + hasInputPassFloat;
-
-    // printf("color:%d (%s) float:%d (%s) outputs:%d\n", colorDisplay, colorName ? *colorName : "", floatDisplay, floatName ? *floatName : "", *noutputs);
-
-    if (hasInputColor) {
-        out->paramId = k_resultColor;
-        out->detail = k_RixSCVarying;
-        out->value = (RtPointer)inputColor; // Pass through the results.
-        out++;
-    }
-    if (hasInputPassColor) {
-        out->paramId = k_resultPassColor;
-        out->detail = k_RixSCVarying;
-        out->value = (RtPointer)inputPassColor; // Pass through the results.
-        out++;
-    }
-    if (hasInputFloat) {
-        out->paramId = k_resultFloat;
-        out->detail = k_RixSCVarying;
-        out->value = (RtPointer)inputFloat; // Pass through the results.
-        out++;
-    }
-    if (hasInputPassFloat) {
-        out->paramId = k_resultPassFloat;
-        out->detail = k_RixSCVarying;
-        out->value = (RtPointer)inputPassFloat; // Pass through the results.
-        out++;
-    }
-
+    *noutputs = 0;
+    #define DONE_OUTPUT { out++; (*noutputs)++; }
+    
+    RtColorRGB defaultColor; // Just something to pull from without complaining.
+    RtFloat defaultFloat;
+    RtColorRGB const *inputColor;
+    RtFloat const *inputFloat;
+    RixSCDetail detail;
+    
+    // Pull on the inputAOV plug to make others evaluate.
+    RtInt const *inputAOV = NULL;
+    sctx->EvalParam(k_inputAOV, -1, &inputAOV);
+    // ...and push it back out.
     out->paramId = k_resultAOV;
     out->detail = k_RixSCUniform;
     out->value = (RtPointer)pool.AllocForPattern<RtInt>(1);
-
-    // If we don't have a display match, then just pass on through.
-    // This needs to be "success" so that the values carry through.
-    if (colorDisplay < 0 && floatDisplay < 0) {
-        return 0;
+    ((RtInt*)out->value)[0] = inputAOV ? inputAOV[0] : 0;
+    DONE_OUTPUT
+    
+    // Passthrough other trigger values.
+    detail = sctx->EvalParam(k_inputPassFloat, -1, &inputFloat, &defaultFloat);
+    if (detail) {
+        out->paramId = k_resultPassFloat;
+        out->detail = detail;
+        out->value = inputFloat;
+        DONE_OUTPUT
     }
-
+    detail = sctx->EvalParam(k_inputPassColor, -1, &inputColor, &defaultColor);
+    if (detail) {
+        out->paramId = k_resultPassColor;
+        out->detail = detail;
+        out->value = inputColor;
+        DONE_OUTPUT
+    }
+    
     // Write to the AOVs.
     RixDisplayServices *displayServices = sctx->GetDisplayServices();
-    for (int i = 0; i < sctx->numPts; i++) {
-        // NOTE: We are using Write instead of Splat, which does not have any
-        // filtering or anything.
-        if (colorDisplay >= 0) {
-            displayServices->Write(colorDisplay, sctx->integratorCtxIndex[i], inputColor[i]);
+    for (int i = 0; i < NUM_MAPPINGS; i++) {
+        
+        if (data->displays[i] < 0) {
+            continue;
         }
-        if (floatDisplay >= 0) {
-            displayServices->Write(floatDisplay, sctx->integratorCtxIndex[i], inputFloat[i]);
+        
+        // Read the input.
+        if (mappings[i].type == k_RixSCFloat) {
+            detail = sctx->EvalParam(mappings[i].inputParam, -1, &inputFloat, &defaultFloat);
+        } else {
+            detail = sctx->EvalParam(mappings[i].inputParam, -1, &inputColor, &defaultColor);
+        }
+        if (!detail) {
+            // We likely don't need to check this due to check in instance data.
+            continue;
+        }
+        
+        // Pass it back out if requested.
+        if (mappings[i].resultParam >= 0) {
+            // DEBUG("writing through %s", mappings[i].name);
+            out->paramId = mappings[i].resultParam;
+            out->detail = detail;
+            out->value = mappings[i].type == k_RixSCFloat ? (void*)inputFloat : (void*)inputColor;
+            DONE_OUTPUT
+        }
+        
+        for (int p = 0; p < sctx->numPts; p++) {
+            // NOTE: We are using Write instead of Splat, which does not have any
+            // filtering or anything.
+            if (mappings[i].type == k_RixSCFloat) {
+                displayServices->Write(data->displays[i], sctx->integratorCtxIndex[p], inputFloat[detail == k_RixSCVarying ? p : 0]);
+            } else {
+                displayServices->Write(data->displays[i], sctx->integratorCtxIndex[p], inputColor[detail == k_RixSCVarying ? p : 0]);
+            }
         }
     }
     

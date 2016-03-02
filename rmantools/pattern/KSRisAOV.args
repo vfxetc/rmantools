@@ -6,35 +6,104 @@
 
     <page name="Color" open="True">
 
-        <param name="inputColor" lavel="Input Color" type="color" input="True" default="0 0 0">
+        <param name="inputColor" type="color" input="True" default="0 0 0">
             <tags><tag value="color"/></tags>
         </param>
-        <param name="colorName" label="Color AOV Name" type="string" input="False" default="">
+        <param name="colorName" type="string" input="False" default="">
             <tags><tag value="__noconnection"/></tags>
         </param>
 
     </page>
+    
+    <page name="Colors 1-9" open="False">
+
+        <param name="inputColor1" type="color" input="True" default=".94 .49 .50">
+            <tags><tag value="color"/></tags>
+        </param>
+        <param name="colorName1" type="string" input="False" default="">
+            <tags><tag value="__noconnection"/></tags>
+        </param>
+
+        <param name="inputColor2" type="color" input="True" default=".95 .78 .50">
+            <tags><tag value="color"/></tags>
+        </param>
+        <param name="colorName2" type="string" input="False" default="">
+            <tags><tag value="__noconnection"/></tags>
+        </param>
+        
+        <param name="inputColor3" type="color" input="True" default=".82 .95 .51">
+            <tags><tag value="color"/></tags>
+        </param>
+        <param name="colorName3" type="string" input="False" default="">
+            <tags><tag value="__noconnection"/></tags>
+        </param>
+
+        <param name="inputColor4" type="color" input="True" default=".54 .95 .51">
+            <tags><tag value="color"/></tags>
+        </param>
+        <param name="colorName4" type="string" input="False" default="">
+            <tags><tag value="__noconnection"/></tags>
+        </param>
+        
+        <param name="inputColor5" type="color" input="True" default=".52 .95 .77">
+            <tags><tag value="color"/></tags>
+        </param>
+        <param name="colorName5" type="string" input="False" default="">
+            <tags><tag value="__noconnection"/></tags>
+        </param>
+
+        <param name="inputColor6" type="color" input="True" default=".53 .85 .95">
+            <tags><tag value="color"/></tags>
+        </param>
+        <param name="colorName6" type="string" input="False" default="">
+            <tags><tag value="__noconnection"/></tags>
+        </param>
+        
+        <param name="inputColor7" type="color" input="True" default=".53 .58 .95">
+            <tags><tag value="color"/></tags>
+        </param>
+        <param name="colorName7" type="string" input="False" default="">
+            <tags><tag value="__noconnection"/></tags>
+        </param>
+        
+        <param name="inputColor8" type="color" input="True" default=".76 .54 .95">
+            <tags><tag value="color"/></tags>
+        </param>
+        <param name="colorName8" type="string" input="False" default="">
+            <tags><tag value="__noconnection"/></tags>
+        </param>
+
+        <param name="inputColor9" type="color" input="True" default=".95 .55 .88">
+            <tags><tag value="color"/></tags>
+        </param>
+        <param name="colorName9" type="string" input="False" default="">
+            <tags><tag value="__noconnection"/></tags>
+        </param>
+        
+
+    </page>
+    
     <page name="Float" open="True">
 
-        <param name="inputFloat" lavel="Input Float" type="float" input="True" default="0">
+        <param name="inputFloat" type="float" input="True" default="0">
             <tags><tag value="float"/></tags>
         </param>
-        <param name="floatName" label="Float AOV Name" type="string" input="False" default="">
+        <param name="floatName" type="string" input="False" default="">
             <tags><tag value="__noconnection"/></tags>
         </param>
 
     </page>
     <page name="Utils" open="True">
 
-        <param name="inputPassColor" lavel="Passthrough Color Value" type="color" input="True" default="0 0 0">
+        <param name="inputPassColor" label="Passthrough Color" type="color" input="True" default="0 0 0">
             <help>Just for triggering evaluation.</help>
             <tags><tag value="color"/></tags>
         </param>
-        <param name="inputPassFloat" lavel="Passthrough Float Value" type="float" input="True" default="0">
+        <param name="inputPassFloat" label="Passthrough Float" type="float" input="True" default="0">
             <help>Just for triggering evaluation.</help>
             <tags><tag value="float"/></tags>
         </param>
-        <param name="inputAOV" lavel="Input AOV" type="int" input="True" default="0">
+        <param name="inputAOV" label="Input AOV" type="int" input="True" default="0">
             <help>Just for triggering evaluation.</help>
             <tags><tag value="int"/></tags>
         </param>
