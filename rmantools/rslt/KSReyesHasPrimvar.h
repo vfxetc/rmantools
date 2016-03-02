@@ -1,11 +1,11 @@
-#ifndef KS_REYES_HAS_PRIM_H
-#define KS_REYES_HAS_PRIM_H
+#ifndef KS_REYES_HAS_PRIMVAR_H
+#define KS_REYES_HAS_PRIMVAR_H
 /*
 <rman id="rslt">
 slim 1 extensions pixar_db {
 extensions pixar {} {
 
-    template void KSReyesHasPrim {
+    template void KSReyesHasPrimvar {
         
         description {
             Determine if the current surface is hair from Shave and a Haircut.
@@ -36,9 +36,9 @@ extensions pixar {} {
 
         parameter { output float } result { detail mustvary }
 
-        RSLInclude KSReyesHasPrim.h
+        RSLInclude KSReyesHasPrimvar.h
         RSLFunction {
-            // No extra source for KSReyesHasPrim.
+            // No extra source for KSReyesHasPrimvar.
         }
 
     }
@@ -49,7 +49,7 @@ extensions pixar {} {
 
 
 
-void KSReyesHasPrim(
+void KSReyesHasPrimvar(
     string primvarName;
     float assumeTrue;
     output float result;

@@ -1,6 +1,6 @@
 <args format="1.0">
 
-    <metashader shader="KSRisHasPrim" />
+    <metashader shader="KSRisHasPrimvar" />
 
     <info plugin="KSRisIsShave" revision="$Revision" date="$Date">
         KSRisIsShave: Determines if the current surface is from Shave and a Haircut.

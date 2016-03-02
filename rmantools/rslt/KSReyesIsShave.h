@@ -1,5 +1,5 @@
-#ifndef KS_REYES_HAIR_FADE_H
-#define KS_REYES_HAIR_FADE_H
+#ifndef KS_REYES_IS_SHAVE_H
+#define KS_REYES_IS_SHAVE_H
 /*
 <rman id="rslt">
 slim 1 extensions pixar_db {

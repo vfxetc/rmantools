@@ -1,7 +1,7 @@
 <args format="1.0">
 
-    <info plugin="KSRisHasPrim" revision="$Revision" date="$Date">
-        KSRisHasPrim: Determines if the current surface is from Shave and a Haircut.
+    <info plugin="KSRisHasPrimvar" revision="$Revision" date="$Date">
+        KSRisHasPrimvar: Determines if the current surface is from Shave and a Haircut.
     </info>
 
     <shaderType>
