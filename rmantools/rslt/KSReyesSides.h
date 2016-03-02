@@ -1,6 +1,6 @@
-#ifndef KS_REYES_NOISE_H
-#define KS_REYES_NOISE_H
-/* 
+#ifndef KS_REYES_SIDES_H
+#define KS_REYES_SIDES_H
+/*
 <rman id="rslt">
 slim 1 extensions pixar_db {
 extensions pixar {} {
@@ -61,7 +61,7 @@ void KSReyesSides(
 ) {
 
     normal NN;
-    if (useGeometricNormal > 0) { 
+    if (useGeometricNormal > 0) {
         NN = Ng;
     } else {
         NN = N;

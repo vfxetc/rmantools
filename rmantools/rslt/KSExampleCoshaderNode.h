@@ -1,6 +1,6 @@
-#ifndef KS_REYES_NOISE_H
-#define KS_REYES_NOISE_H
-/* 
+#ifndef KS_EXAMPLE_COSHADER_NODE_H
+#define KS_EXAMPLE_COSHADER_NODE_H
+/*
 <rman id="rslt">
 slim 1 extensions pixar_db {
 extensions pixar {} {
