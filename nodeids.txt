@@ -1,6 +1,7 @@
 $ grep -r nodeid
 
 ./rmantools/pattern/KSRisAOV.args:             <rfmdata nodeid="20000000" classification="rendernode/RenderMan/pattern"/>
+./rmantools/pattern/KSRisAOVMulti.args:        <rfmdata nodeid="20000003" classification="rendernode/RenderMan/pattern"/>
 ./rmantools/pattern/KSRisSides.args:           <rfmdata nodeid="20000001" classification="rendernode/RenderMan/pattern"/>
 ./rmantools/pattern/KSExampleRisOSL.args:      <rfmdata nodeid="20000002" classification="rendernode/RenderMan/pattern"/>
 
@@ -11,7 +12,7 @@ $ grep -r nodeid
 ./rmantools/rslt/KSReyesHairMapping.h:                rfm_nodeid 2000013
 ./rmantools/rslt/KSReyesAOV.h:                        rfm_nodeid 2000014
 ./rmantools/rslt/KSReyesSides.h:                      rfm_nodeid 2000015
-./rmantools/rslt/KSReyesHairFade.h:                      rfm_nodeid 2000016
+./rmantools/rslt/KSReyesHairFade.h:                   rfm_nodeid 2000016
 
 ./rmantools/rslt/KSReyesPlastic.sl:                   rfm_nodeid 2000021
 ./rmantools/rslt/KSReyesHair.sl:                      rfm_nodeid 2000022

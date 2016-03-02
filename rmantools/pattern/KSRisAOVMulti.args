@@ -1,0 +1,49 @@
+<args format="1.0">
+
+    <info plugin="KSRisAOVMulti" revision="$Revision" date="$Date">
+        KSRisAOV: xxx.
+    </info>
+    <shaderType>
+        <tag value="pattern"/>
+    </shaderType>
+    <rfmdata nodeid="20000003" classification="rendernode/RenderMan/pattern"/>
+
+
+    <page name="Color" open="True">
+    
+        <param name="color1" lavel="Color 1" type="color" input="True" default="0 0 0">
+            <tags><tag value="color"/></tags>
+        </param>
+        <param name="name1" label="Name 1" type="string" input="False" default="">
+            <tags><tag value="__noconnection"/></tags>
+        </param>
+        
+        <param name="color2" lavel="Color 2" type="color" input="True" default="0 0 0">
+            <tags><tag value="color"/></tags>
+        </param>
+        <param name="name2" label="Name 2" type="string" input="False" default="">
+            <tags><tag value="__noconnection"/></tags>
+        </param>
+
+    </page>
+    
+    <page name="Utils" open="True">
+
+        <param name="inputAOV" lavel="Input AOV" type="int" input="True" default="0">
+            <help>Just for triggering evaluation.</help>
+            <tags><tag value="int"/></tags>
+        </param>
+        <output name="resultAOV" label="Result AOV">
+            <help>Just for triggering evaluation.</help>
+            <tags>
+                <tag value="int"/>
+            </tags>
+        </output>
+
+    </page>
+
+    
+
+
+
+</args>
