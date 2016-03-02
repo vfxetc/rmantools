@@ -7,7 +7,7 @@
 #include <stdio.h>
 // #include <pthread.h>
 
-#define DEBUG(x, ...) printf("[KSRisAOVMulti] " x "\n", ##__VA_ARGS__); fflush(stdout);
+#define DEBUG(x, ...) // printf("[KSRisAOVMulti] " x "\n", ##__VA_ARGS__); fflush(stdout);
     
 #define NUM_INPUTS 10
 
@@ -121,13 +121,13 @@ KSRisAOVMulti::CreateInstanceData(RixContext &ctx,
         
         DEBUG("name%d = \"%s\"", i + 1, name);
         
-        // RixSCType shadingType;
-        // RixSCConnectionInfo connInfo;
-        // plist->GetParamInfo(k_colorOffset + i * 2, &shadingType, &connInfo);
-        // if (connInfo != k_RixSCNetworkValue) {
-        //     DEBUG("    nothing connected to input; skipping");
-        //     continue;
-        // }
+        RixSCType shadingType;
+        RixSCConnectionInfo connInfo;
+        plist->GetParamInfo(k_colorOffset + i * 2, &shadingType, &connInfo);
+        if (connInfo == k_RixSCDefaultValue) {
+            DEBUG("    nothing connected to input; skipping");
+            continue;
+        }
         
         // Find a matching display.
         for (int j = 0; j < numDisplays; j++) {
