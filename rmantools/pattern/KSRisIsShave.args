@@ -1,0 +1,26 @@
+<args format="1.0">
+
+    <info plugin="KSRisIsShave" revision="$Revision" date="$Date">
+        KSRisIsShave: Determines if the current surface is from Shave and a Haircut.
+    </info>
+
+    <shaderType>
+        <tag value="pattern"/>
+    </shaderType>
+    <rfmdata nodeid="20000003" classification="rendernode/RenderMan/pattern"/>
+    
+    <param name="primvarName" label="Primitive Variable" type="string" default="SHAVEambdiff">
+        <help>Which primitive variable to check for? Defaults to "SHAVEambdiff".</help>
+        <tags><tag value="string"/></tags>
+    </param>
+
+    <param name="assumeTrue" type="float" input="True" default="0" widget="checkBox">
+        <help>Force output to be true.</help>
+        <tags><tag value="checkBox"/></tags>
+    </param>
+
+    <output name="result" label="Result">
+        <tags><tag value="float"/></tags>
+    </output>
+
+</args>
