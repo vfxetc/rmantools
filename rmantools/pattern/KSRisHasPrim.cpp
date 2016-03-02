@@ -7,16 +7,16 @@
 #include <stdio.h>
 
 
-#define DEBUG(x, ...) printf("[KSRisIsShave] " x "\n", ##__VA_ARGS__); fflush(stdout);
+#define DEBUG(x, ...) printf("[KSRisHasPrim] " x "\n", ##__VA_ARGS__); fflush(stdout);
 
 
-class KSRisIsShave : public RixPattern
+class KSRisHasPrim : public RixPattern
 {
 public:
 
     // Stubs.
-    KSRisIsShave() {}
-    virtual ~KSRisIsShave() {}
+    KSRisHasPrim() {}
+    virtual ~KSRisHasPrim() {}
     virtual int Init(RixContext &, char const *pluginpath) { return 0; }
     virtual void Finalize(RixContext &) {}
     
@@ -41,7 +41,7 @@ enum paramId
 
 
 RixSCParamInfo const *
-KSRisIsShave::GetParamTable()
+KSRisHasPrim::GetParamTable()
 {
     static RixSCParamInfo s_ptable[] =
     {
@@ -55,7 +55,7 @@ KSRisIsShave::GetParamTable()
 
 
 int
-KSRisIsShave::ComputeOutputParams(RixShadingContext const *sctx,
+KSRisHasPrim::ComputeOutputParams(RixShadingContext const *sctx,
                                 RtInt *noutputs, OutputSpec **outputs,
                                 RtConstPointer instanceData,
                                 RixSCParamInfo const *ignored)
@@ -101,11 +101,11 @@ KSRisIsShave::ComputeOutputParams(RixShadingContext const *sctx,
 
 RIX_PATTERNCREATE
 {
-    return new KSRisIsShave();
+    return new KSRisHasPrim();
 }
 
 RIX_PATTERNDESTROY
 {
-    delete ((KSRisIsShave*)pattern);
+    delete ((KSRisHasPrim*)pattern);
 }
 

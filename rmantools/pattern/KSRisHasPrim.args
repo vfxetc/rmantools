@@ -1,18 +1,16 @@
 <args format="1.0">
 
-    <metashader shader="KSRisHasPrim" />
-
-    <info plugin="KSRisIsShave" revision="$Revision" date="$Date">
-        KSRisIsShave: Determines if the current surface is from Shave and a Haircut.
+    <info plugin="KSRisHasPrim" revision="$Revision" date="$Date">
+        KSRisHasPrim: Determines if the current surface is from Shave and a Haircut.
     </info>
 
     <shaderType>
         <tag value="pattern"/>
     </shaderType>
-    <rfmdata nodeid="20000003" classification="rendernode/RenderMan/pattern"/>
+    <rfmdata nodeid="20000004" classification="rendernode/RenderMan/pattern"/>
     
-    <param name="primvarName" label="Primitive Variable" type="string" default="SHAVEambdiff">
-        <help>Which primitive variable to check for? Defaults to "SHAVEambdiff".</help>
+    <param name="primvarName" label="Primitive Variable" type="string" default="">
+        <help>Which primitive variable to check for?</help>
         <tags><tag value="string"/></tags>
     </param>
 
